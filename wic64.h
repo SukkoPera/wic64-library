@@ -380,6 +380,32 @@ wic64_nop = $ea
 ;---------------------------------------------------------
 
 !macro wic64_wait_for_handshake_code {
+    ;~ ; Produce timing pulse on PA2
+    ;~ txa
+    ;~ pha
+    
+    ;~ lda ACIA_CMD
+    ;~ tax
+    ;~ and #(1 << 3)
+    ;~ bne +
+
+    ;~ ; Signal is low, produce high pulse
+    ;~ txa
+    ;~ ora #(1 << 3)
+    ;~ sta ACIA_CMD
+    ;~ txa
+    ;~ sta ACIA_CMD
+    ;~ jmp ++
+
+    ;~ ; Signal is high, produce low pulse
+;~ +   txa
+    ;~ and #!(1 << 3)
+    ;~ sta ACIA_CMD
+    ;~ txa
+    ;~ sta ACIA_CMD
+    
+;~ ++  pla
+    ;~ tax
 
     ; wait until a handshake has been received from the ESP,
     ; e.g. the FLAG2 line on the userport has been asserted,
@@ -390,9 +416,10 @@ wic64_nop = $ea
     ; do a first cheap test for FLAG2 before wasting cycles
     ; setting up the counters.
 
-    lda #$10
-    bit $dd0d
+    lda #(1 << 5)
+    bit ACIA_STATUS
     !if (wic64_optimize_for_size == 0) {
+        ; FLAG2 is low, good!        
         bne .success
     } else {
         beq +
@@ -408,9 +435,9 @@ wic64_nop = $ea
 +   sta wic64_counters+1
 
    ; keep testing for FLAG2 until all counters are down to zero
-   lda #$10
+   lda #(1 << 5)
 .wait
-    bit $dd0d
+    bit ACIA_STATUS
     !if (wic64_optimize_for_size == 0) {
         bne .success
     } else {
@@ -428,9 +455,11 @@ wic64_nop = $ea
     bne .wait
 
 .timeout
+    +flag2_clear
     jmp wic64_handle_timeout
 
 .success
+    +flag2_clear
 }
 
 !if (wic64_optimize_for_size == 0) {

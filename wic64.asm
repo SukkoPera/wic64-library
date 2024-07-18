@@ -10,8 +10,103 @@
 ;
 ; This file contains mostly technical comments.
 
+; +++ PLUS/4 INFORMATION +++
+; The Data Direction Register is located at $dd03 (56579). Each bit corresponds to an individual pin (PB0-PB7). 1 sets the pin as output, while 0 as input. Access to the pins is possible using the register located at $dd01 (56577).
+; 
+;     The "PC2" signal (ack/strobe: byte read from/written to port, rising edge) is controlled through /RTS
+;     The "PA2" signal (Direction: HIGH = C64/+4 => ESP, LOW = ESP => C64/+4) is controlled through /DTR
+;     The "FLAG2" signal (ack/strobe: byte read from/written to port, falling edge) can be read through /DCD.
+; 
+; /DTR and /RTS can be controlled through bits 0 and 3 (respectively) of $FD02 (Note that there is an inverter inbetween, so they are not really active-low).
+; 
+; /DCD can be read through bit 5 of $FD01. An interrupt can also be set up to track its changes.
+
+!src "264.asm"
+
 !zone wic64 {
 .origin = *
+
+!macro handshake_pulse {
+    ; Pulse PC2 (RTS)
+    ; In real CIAs PC will go low on the third cycle after a port B access
+    lda ACIA_CMD
+    and #!(1 << 3)      ; Low
+    ;~ nop
+    ;~ nop
+    sta ACIA_CMD
+    ora #(1 << 3)       ; High
+    sta ACIA_CMD
+}
+
+!macro userport_write {
+    sta USERPORT
+    +handshake_pulse
+}
+
+!macro userport_read {
+    lda USERPORT
+    pha                 ; We must preserve A here
+    +handshake_pulse
+    pla
+}
+
+; DTR, PA2 high => +4 sends, ESP receives
+!macro pa2_high {
+    lda #$1F
+    sta ACIA_TX
+    +wait_raster         ; It looks like RTS won't go down while a transmission is in progress, so wait for transmission to end (can probably be shortened to ~350us)
+    ; FIXME: Note that RTS must be 1 to do the toggling
+}
+
+; ESP sends, +4 receives
+!macro pa2_low {
+    lda #$1F
+    sta ACIA_TX
+    +wait_raster
+}
+
+!macro flag2_clear {
+    ; Pulse DTR low
+    lda ACIA_CMD
+    and #!(1 << 0)      ; Low
+    sta ACIA_CMD
+    ora #(1 << 0)       ; High
+    sta ACIA_CMD
+}
+
+!macro wait_raster .line {
+-   lda TED_VRASTER
+    cmp #.line
+    bne -
+}
+
+!macro wait_raster {
+    +wait_raster $cb
+}
+
+!macro wic64_setup {
+    lda #$FF                        ; Actual value is DNC
+    sta ACIA_RESET
+    +wait_raster
+    
+    lda #((1 << 6) | (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0))       ; 1 stop bit, 5 data bits, oboard clock, 19200 bps
+    sta ACIA_CTL
+    lda #((1 << 3) | (1 << 1) | (1 << 0))      ; RX int disabled, RTS (PC2) and DTR (PA2) high
+    sta ACIA_CMD
+
+    lda #$1F
+    sta ACIA_TX
+    +wait_raster
+    lda #$1F
+    sta ACIA_TX
+    +wait_raster
+    lda #$1F
+    sta ACIA_TX
+    +wait_raster
+    lda #$1F
+    sta ACIA_TX
+    +wait_raster
+}
 
 ;---------------------------------------------------------
 ; Define wic64_wait_for_handshake_routine and the
@@ -49,6 +144,8 @@ wic64_send: ; EXPORT
     +wic64_set_source_pointer_from wic64_request
     jsr wic64_limit_bytes_to_transfer_to_remaining_bytes
 
+jmp .wic64_send_critical_begin
+!align 255,0
 .wic64_send_critical_begin:
 
 .send_pages
@@ -58,7 +155,7 @@ wic64_send: ; EXPORT
 wic64_fetch_instruction_pages = *
 wic64_source_pointer_pages = *+1
 -   lda $0000,y
-    sta $dd01
+    +userport_write
     +wic64_wait_for_handshake
     iny
     bne -
@@ -92,7 +189,7 @@ wic64_source_pointer_highbyte_inc = *
 wic64_fetch_instruction_bytes = *
 wic64_source_pointer_bytes = *+1
 -   lda $0000,y
-    sta $dd01
+    +userport_write
     +wic64_wait_for_handshake
     iny
     dex
@@ -109,13 +206,11 @@ wic64_source_pointer_bytes = *+1
 
 wic64_send_header: ; EXPORT
     ; ask esp to switch to input by setting pa2 high
-    lda $dd00
-    ora #$04
-    sta $dd00
+    +pa2_high
 
-    ; switch userport to output
-    lda #$ff
-    sta $dd03
+    ; switch userport to output (+4: not needed)
+    ;lda #$ff
+    ;sta $dd03
 
     ; assume standard protocol header sizes
     lda #$04
@@ -160,7 +255,7 @@ wic64_send_header: ; EXPORT
 .send_header:
     ldy #$00
 -   lda .request_header,y
-    sta $dd01
+    +userport_write
     +wic64_wait_for_handshake
     iny
     cpy wic64_request_header_size
@@ -183,29 +278,37 @@ wic64_send_header: ; EXPORT
 ;---------------------------------------------------------
 
 wic64_receive_header: ; EXPORT
-    ; switch userport to input
-    lda #$00
-    sta $dd03
+    ; switch userport to input (+4: pull all lines up)
+    ;lda #$00
+    ;sta $dd03
+    lda #$ff
+    sta USERPORT
 
     ; signal readiness to receive by pulling PA2 low
-    lda $dd00
-    and #!$04
-    sta $dd00
-
+    ;lda $dd00
+    ;and #!$04
+    ;sta $dd00
+    +pa2_low
+    ;~ +handshake_pulse            ; AAAAAA
+    
     ; esp now sends a handshake to confirm change of direction
     +wic64_wait_for_handshake
 
-    ; esp now expects a handshake (accessing $dd01 asserts PC2 line)
-    lda $dd01
+    ; esp now expects a handshake
+    +handshake_pulse
 
     ; receive response header
     ldx #$00
 -   +wic64_wait_for_handshake
-    lda $dd01
+    +userport_read
     sta .response_header,x
     inx
     cpx wic64_response_header_size
     bne -
+
+    ; wic64_response_header_size is 3:
+    ; - First byte is wic64_status (0 means no error)
+    ; - 2nd/3rd are wic64_response_size (and 6502 is little-endian)
 
     ; prepare receive
     lda wic64_response_size
@@ -248,6 +351,8 @@ wic64_receive: ; EXPORT
     +wic64_set_destination_pointer_from wic64_response
     jsr wic64_limit_bytes_to_transfer_to_remaining_bytes
 
+    jmp .wic64_receive_critical_begin
+    !align 255,0
 .wic64_receive_critical_begin:
 
 .receive_pages:
@@ -256,7 +361,7 @@ wic64_receive: ; EXPORT
     ldy #$00
 
 -   +wic64_wait_for_handshake
-    lda $dd01
+    +userport_read
 wic64_store_instruction_pages = *
 wic64_destination_pointer_pages = *+1
     sta $0000,y
@@ -274,7 +379,9 @@ wic64_destination_pointer_highbyte_inc = *
 .receive_remaining_bytes:
     ldx wic64_bytes_to_transfer
     beq .receive_done
-
+    ;~ bne +
+    ;~ jmp .receive_done
+;~ +
     ; skip copying current destination pointer position
     ; if a custom store instruction is installed
     lda wic64_store_instruction_bytes
@@ -290,7 +397,7 @@ wic64_destination_pointer_highbyte_inc = *
 
 +   ldy #$00
 -   +wic64_wait_for_handshake
-    lda $dd01
+    +userport_read
 wic64_store_instruction_bytes = *
 wic64_destination_pointer_bytes = *+1
     sta $0000,y
@@ -302,6 +409,7 @@ wic64_destination_pointer_bytes = *+1
 .wic64_receive_critical_end:
 
 .receive_done:
+    ;~ +handshake_pulse            ; AAAAAA
     +wic64_update_transfer_size_after_transfer
     clc
     rts
@@ -361,7 +469,8 @@ wic64_limit_bytes_to_transfer_to_remaining_bytes:
 
 wic64_initialize: ; EXPORT
     ; always start with a cleared FLAG2 bit in $dd0d
-    lda $dd0d
+    +flag2_clear
+    ;~ +flag2_clear
 
     ; make sure timeout is at least $01
     lda wic64_timeout
@@ -392,10 +501,12 @@ wic64_initialize: ; EXPORT
     sei
 
 +   ; ensure pa2 is set to output
-    lda $dd02
-    ora #$04
-    sta $dd02
-
+    ;lda $dd02
+    ;ora #$04
+    ;sta $dd02
+    ;~ lda #((1 << 3) | (1 << 1) | (1 << 0))       ; RTS high, RX int disabled, DTR high
+    ;~ sta ACIA_CMD
+ 
     ; clear carry -- will be set if transfer times out
     clc
     rts
@@ -405,11 +516,16 @@ wic64_initialize: ; EXPORT
 wic64_finalize: ; EXPORT
     ; switch userport back to input - we want to have both sides
     ; in input mode when idle, only switch to output if necessary
-    lda #$00
-    sta $dd03
+    ;lda #$00
+    ;sta $dd03
+    ; +4: Communication is open-collector, nothing to worry about but ok
+    lda #$ff
+    sta USERPORT
 
     ; always exit with a cleared FLAG2 bit in $dd0d as well
-    lda $dd0d
+    +flag2_clear
+    ;~ +flag2_clear
+    ;~ +flag2_clear
 
     ; reset to user timeout
     lda wic64_configured_timeout
@@ -528,6 +644,7 @@ wic64_detect: !zone wic64_detect { ; EXPORT
     lda #$01
     sta wic64_timeout
 
+    +wic64_setup        ; Only do this *once* at the beginning
     +wic64_initialize
 
     ; The legacy firmware will accept all request bytes even if it doesn't
@@ -536,6 +653,9 @@ wic64_detect: !zone wic64_detect { ; EXPORT
 
     +wic64_send_header .request
     bcs .return
+    ;~ bcc +
+    ;~ jmp .return
+;~ +
 
     ; Set response size to the distinct value of $55 before receiving response
     ; header. Firmware 2.0.0 will send a response between 6 and 30 bytes, so if
@@ -561,9 +681,8 @@ wic64_detect: !zone wic64_detect { ; EXPORT
     ; properly reqister each handshake.
 
     ldy wic64_response_size
--   lda $dd01
-    nop
-    nop
+-   +wic64_wait_for_handshake
+    +userport_read
     dey
     bne -
 
@@ -643,10 +762,10 @@ wic64_load_and_run: ; EXPORT
 .ready_to_receive:
     ; manually receive and discard the load address
     +wic64_wait_for_handshake
-    lda $dd01
+    +userport_read
 
     +wic64_wait_for_handshake
-    lda $dd01
+    +userport_read
 
     ; copy .receive_and_run routine to tape buffer
     ldx #$00
@@ -672,6 +791,7 @@ wic64_load_and_run: ; EXPORT
 
 ;---------------------------------------------------------
 
+; +4: This stuff will need to be adapted
 .tapebuffer = $0334
 .basic_end_pointer = $2d
 .basic_reset_program_pointer = $a68e
@@ -693,26 +813,31 @@ wic64_load_and_run: ; EXPORT
     ; an infinite loop.
 
     ; bank in kernal
-    lda #$37
-    sta $01
+    ;~ lda #$37
+    ;~ sta $01
 
     ; make sure nmi vector points to default nmi handler
-    lda #$47
-    sta $0318
-    lda #$fe
-    sta $0319
+    ;~ lda #$47
+    ;~ sta $0318
+    ;~ lda #$fe
+    ;~ sta $0319
 
     ; transfer pages
     ldx .response_size+1
     beq ++
 
     ldy #$00
--   lda $dd0d
-    and #$10
-    beq -
-    lda $dd01
+    ; Wait for falling edge on FLAG2 (+4: /DCD) - This is tricky because we don't have a "latching" mechanism on the +4
+;-   lda $dd0d
+;    and #$10
+-   lda ACIA_STATUS
+    and #$20
+    beq -               ; Note there's an inverter inbetween, so we chack that level is HIGH
+    +flag2_clear
+;    lda $dd01
+    +userport_read
 .destination_pointer_pages = *+1
-    sta $0801,y
+    sta $0801,y         ; Default BASIC area, FIXME
     iny
     bne -
 
@@ -730,10 +855,13 @@ wic64_load_and_run: ; EXPORT
     sta .destination_pointer_bytes+1
 
     ldy #$00
--   lda $dd0d
-    and #$10
+;-   lda $dd0d
+;    and #$10
+-   lda ACIA_STATUS
+    and #$20
     beq -
-    lda $dd01
+;    lda $dd01
+    +userport_read
 .destination_pointer_bytes = *+1
     sta $0000,y
     iny

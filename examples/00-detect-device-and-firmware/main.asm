@@ -1,7 +1,12 @@
-* = $0801 ; 10 SYS 2064 ($0810)
-!byte $0c, $08, $0a, $00, $9e, $20, $32, $30, $36, $34, $00, $00, $00
+* = $1001
+    !word nextln, 0     ; second word is line number
+    !byte $9e
+    !text "4109"
+    !byte 0 
+nextln:
+    !byte 0, 0
 
-*=$0810
+;~ * = $100d
 jmp main
 
 !src "wic64.h"
