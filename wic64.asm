@@ -409,7 +409,6 @@ wic64_destination_pointer_bytes = *+1
 .wic64_receive_critical_end:
 
 .receive_done:
-    ;~ +handshake_pulse            ; AAAAAA
     +wic64_update_transfer_size_after_transfer
     clc
     rts
@@ -470,7 +469,6 @@ wic64_limit_bytes_to_transfer_to_remaining_bytes:
 wic64_initialize: ; EXPORT
     ; always start with a cleared FLAG2 bit in $dd0d
     +flag2_clear
-    ;~ +flag2_clear
 
     ; make sure timeout is at least $01
     lda wic64_timeout
@@ -524,8 +522,6 @@ wic64_finalize: ; EXPORT
 
     ; always exit with a cleared FLAG2 bit in $dd0d as well
     +flag2_clear
-    ;~ +flag2_clear
-    ;~ +flag2_clear
 
     ; reset to user timeout
     lda wic64_configured_timeout
@@ -791,16 +787,26 @@ wic64_load_and_run: ; EXPORT
 
 ;---------------------------------------------------------
 
-; +4: This stuff will need to be adapted
-.tapebuffer = $0334
-.basic_end_pointer = $2d
-.basic_reset_program_pointer = $a68e
-.kernal_init_io = $fda3
-.kernal_reset_vectors = $ff8a
-.basic_perform_run = $a7ae
+!addr {
+!if PLUS4 {
+    .tapebuffer = $0332                     ; We have 193 bytes here (up to $3f2)
+    .basic_end_pointer = $2d
+    .basic_reset_program_pointer = $8af1    ; stxtpt
+    .kernal_init_io = $ff84                 ; Jumps to IOINIT (Could work for C64, too)
+    .kernal_reset_vectors = $ff8a           ; Jumps to RESTOR
+    .basic_perform_run = $8bd3
+} else {
+    .tapebuffer = $0334
+    .basic_end_pointer = $2d
+    .basic_reset_program_pointer = $a68e
+    .kernal_init_io = $fda3
+    .kernal_reset_vectors = $ff8a
+    .basic_perform_run = $a7ae
+}
+}
 
 .receive_and_run:
-!pseudopc .tapebuffer {
+!pseudopc .tapebuffer {         ; Assemble to be run from .tapebuffer
 
     ; the receiving code does not include timeout detection
     ; due to the size restrictions of the tapebuffer area.
@@ -815,6 +821,8 @@ wic64_load_and_run: ; EXPORT
     ; bank in kernal
     ;~ lda #$37
     ;~ sta $01
+    sta $ff3e                   ; Enable ROM
+    sta $fdd0                   ; Lo ROM = BASIC, Hi ROM = KERNAL
 
     ; make sure nmi vector points to default nmi handler
     ;~ lda #$47
@@ -830,14 +838,18 @@ wic64_load_and_run: ; EXPORT
     ; Wait for falling edge on FLAG2 (+4: /DCD) - This is tricky because we don't have a "latching" mechanism on the +4
 ;-   lda $dd0d
 ;    and #$10
+    ;~ lda #(1 << 5)
+    ;~ bit ACIA_STATUS       
+    ;~ bne .success
 -   lda ACIA_STATUS
-    and #$20
+    and #(1 << 5)
     beq -               ; Note there's an inverter inbetween, so we chack that level is HIGH
     +flag2_clear
 ;    lda $dd01
     +userport_read
 .destination_pointer_pages = *+1
-    sta $0801,y         ; Default BASIC area, FIXME
+    ;~ sta $0801,y         ; Default BASIC area, FIXME
+    sta $1001,y         ; Default BASIC area, FIXME
     iny
     bne -
 
@@ -858,7 +870,7 @@ wic64_load_and_run: ; EXPORT
 ;-   lda $dd0d
 ;    and #$10
 -   lda ACIA_STATUS
-    and #$20
+    and #(1 << 5)
     beq -
 ;    lda $dd01
     +userport_read
@@ -869,10 +881,17 @@ wic64_load_and_run: ; EXPORT
     bne -
 
 ++  ; adjust basic end pointer
+!if PLUS4 {
+    lda #$01
+    sta .basic_end_pointer
+    lda #$10
+    sta .basic_end_pointer+1
+} else {
     lda #$01
     sta .basic_end_pointer
     lda #$08
     sta .basic_end_pointer+1
+}
 
     lda .response_size
     clc
@@ -889,7 +908,8 @@ wic64_load_and_run: ; EXPORT
 
     ; clear keyboard buffer
     lda #$00
-    sta $c6
+    ;~ sta $c6
+    sta $053f
 
     ; reset system to defaults
 +   jsr .kernal_init_io
@@ -1005,9 +1025,15 @@ wic64_data_section_end: ; EXPORT
 
         !if (wic64_include_load_and_run != 0) {
             !warn "wic64 tapebuffer code size is ", .receive_and_run_size, " bytes"
+!if PLUS4 {
             !if (.receive_and_run_size > 199) {
                 !error "wic64 tapebuffer code does not fit into $0334-$03FB (max. 199 bytes)"
             }
+} else {
+            !if (.receive_and_run_size > 193) {
+                !error "wic64 tapebuffer code does not fit into $0332-$03F2 (max. 193 bytes)"
+            }
+}
         }
     }
 }
