@@ -10,103 +10,15 @@
 ;
 ; This file contains mostly technical comments.
 
-; +++ PLUS/4 INFORMATION +++
-; The Data Direction Register is located at $dd03 (56579). Each bit corresponds to an individual pin (PB0-PB7). 1 sets the pin as output, while 0 as input. Access to the pins is possible using the register located at $dd01 (56577).
-; 
-;     The "PC2" signal (ack/strobe: byte read from/written to port, rising edge) is controlled through /RTS
-;     The "PA2" signal (Direction: HIGH = C64/+4 => ESP, LOW = ESP => C64/+4) is controlled through /DTR
-;     The "FLAG2" signal (ack/strobe: byte read from/written to port, falling edge) can be read through /DCD.
-; 
-; /DTR and /RTS can be controlled through bits 0 and 3 (respectively) of $FD02 (Note that there is an inverter inbetween, so they are not really active-low).
-; 
-; /DCD can be read through bit 5 of $FD01. An interrupt can also be set up to track its changes.
-
-!src "264.asm"
+; Include the platform file
+!if PLUS4 {
+    !src "platform_+4.asm"
+} else {
+    !src "platform_c64.asm"
+}
 
 !zone wic64 {
 .origin = *
-
-!macro handshake_pulse {
-    ; Pulse PC2 (RTS)
-    ; In real CIAs PC will go low on the third cycle after a port B access
-    lda ACIA_CMD
-    and #!(1 << 3)      ; Low
-    ;~ nop
-    ;~ nop
-    sta ACIA_CMD
-    ora #(1 << 3)       ; High
-    sta ACIA_CMD
-}
-
-!macro userport_write {
-    sta USERPORT
-    +handshake_pulse
-}
-
-!macro userport_read {
-    lda USERPORT
-    pha                 ; We must preserve A here
-    +handshake_pulse
-    pla
-}
-
-; DTR, PA2 high => +4 sends, ESP receives
-!macro pa2_high {
-    lda #$1F
-    sta ACIA_TX
-    +wait_raster         ; It looks like RTS won't go down while a transmission is in progress, so wait for transmission to end (can probably be shortened to ~350us)
-    ; FIXME: Note that RTS must be 1 to do the toggling
-}
-
-; ESP sends, +4 receives
-!macro pa2_low {
-    lda #$1F
-    sta ACIA_TX
-    +wait_raster
-}
-
-!macro flag2_clear {
-    ; Pulse DTR low
-    lda ACIA_CMD
-    and #!(1 << 0)      ; Low
-    sta ACIA_CMD
-    ora #(1 << 0)       ; High
-    sta ACIA_CMD
-}
-
-!macro wait_raster .line {
--   lda TED_VRASTER
-    cmp #.line
-    bne -
-}
-
-!macro wait_raster {
-    +wait_raster $cb
-}
-
-!macro wic64_setup {
-    lda #$FF                        ; Actual value is DNC
-    sta ACIA_RESET
-    +wait_raster
-    
-    lda #((1 << 6) | (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0))       ; 1 stop bit, 5 data bits, onboard clock, 19200 bps
-    sta ACIA_CTL
-    lda #((1 << 3) | (1 << 1) | (1 << 0))      ; RX int disabled, RTS (PC2) and DTR (PA2) high
-    sta ACIA_CMD
-
-    lda #$1F
-    sta ACIA_TX
-    +wait_raster
-    lda #$1F
-    sta ACIA_TX
-    +wait_raster
-    lda #$1F
-    sta ACIA_TX
-    +wait_raster
-    lda #$1F
-    sta ACIA_TX
-    +wait_raster
-}
 
 ;---------------------------------------------------------
 ; Define wic64_wait_for_handshake_routine and the
@@ -144,8 +56,11 @@ wic64_send: ; EXPORT
     +wic64_set_source_pointer_from wic64_request
     jsr wic64_limit_bytes_to_transfer_to_remaining_bytes
 
-jmp .wic64_send_critical_begin
-!align 255,0
+; FIXME :(
+!if PLUS4 {
+	jmp .wic64_send_critical_begin
+	!align 255,0
+}
 .wic64_send_critical_begin:
 
 .send_pages
@@ -208,9 +123,8 @@ wic64_send_header: ; EXPORT
     ; ask esp to switch to input by setting pa2 high
     +pa2_high
 
-    ; switch userport to output (+4: not needed)
-    ;lda #$ff
-    ;sta $dd03
+    ; switch userport to output
+    +userport_to_output
 
     ; assume standard protocol header sizes
     lda #$04
@@ -278,16 +192,10 @@ wic64_send_header: ; EXPORT
 ;---------------------------------------------------------
 
 wic64_receive_header: ; EXPORT
-    ; switch userport to input (+4: pull all lines up)
-    ;lda #$00
-    ;sta $dd03
-    lda #$ff
-    sta USERPORT
+    ; switch userport to input
+    +userport_to_input
 
     ; signal readiness to receive by pulling PA2 low
-    ;lda $dd00
-    ;and #!$04
-    ;sta $dd00
     +pa2_low
 
     ; esp now sends a handshake to confirm change of direction
@@ -350,8 +258,11 @@ wic64_receive: ; EXPORT
     +wic64_set_destination_pointer_from wic64_response
     jsr wic64_limit_bytes_to_transfer_to_remaining_bytes
 
+; FIXME :(
+!if PLUS4 {
     jmp .wic64_receive_critical_begin
     !align 255,0
+}
 .wic64_receive_critical_begin:
 
 .receive_pages:
@@ -495,15 +406,8 @@ wic64_initialize: ; EXPORT
     bne +
     sei
 
-+   ; ensure pa2 is set to output
-    ;lda $dd02
-    ;ora #$04
-    ;sta $dd02
-    ;~ lda #((1 << 3) | (1 << 1) | (1 << 0))       ; RTS high, RX int disabled, DTR high
-    ;~ sta ACIA_CMD
- 
     ; clear carry -- will be set if transfer times out
-    clc
++   clc
     rts
 
 ;---------------------------------------------------------
@@ -511,11 +415,7 @@ wic64_initialize: ; EXPORT
 wic64_finalize: ; EXPORT
     ; switch userport back to input - we want to have both sides
     ; in input mode when idle, only switch to output if necessary
-    ;lda #$00
-    ;sta $dd03
-    ; +4: Communication is open-collector, nothing to worry about but ok
-    lda #$ff
-    sta USERPORT
+    +userport_to_input
 
     ; always exit with a cleared FLAG2 as well
     +flag2_clear
@@ -672,7 +572,7 @@ wic64_detect: !zone wic64_detect { ; EXPORT
 
     ldy wic64_response_size
 -   +wic64_wait_for_handshake
-    +userport_read
+    +handshake_pulse
     dey
     bne -
 
@@ -789,16 +689,12 @@ wic64_load_and_run: ; EXPORT
     .kernal_init_io = $ff84                 ; Jumps to IOINIT (Could work for C64, too)
     .kernal_reset_vectors = $ff8a           ; Jumps to RESTOR
     ;~ .kernal_reset_vectors = $ff8d           ; Jumps to VECTOR
-    .basic_prepare_run = $8bbe
-    .basic_perform_run = $8bdc
 } else {
     .tapebuffer = $0334
     .basic_end_pointer = $2d
     .basic_reset_program_pointer = $a68e
     .kernal_init_io = $fda3
     .kernal_reset_vectors = $ff8a
-    .basic_prepare_run = 0
-    .basic_perform_run = $a7ae
 }
 }
 
@@ -815,46 +711,29 @@ wic64_load_and_run: ; EXPORT
     ; least press runstop/restore if this code gets stuck in
     ; an infinite loop.
 
-    ; bank in kernal
-    ;~ lda #$37
-    ;~ sta $01
-    sta TED_ENABLE_ROMS                   ; Enable ROM
-    sta $fdd0                   ; Lo ROM = BASIC, Hi ROM = KERNAL
-
-    ; make sure nmi vector points to default nmi handler
-    ;~ lda #$47
-    ;~ sta $0318
-    ;~ lda #$fe
-    ;~ sta $0319
+    +prepare_run
 
     ; transfer pages
     ldx .response_size+1
     beq ++
 
+    ; Receive a 256-byte page
     ldy #$00
-    ; Wait for falling edge on FLAG2 (+4: /DCD)
-;-   lda $dd0d
-;    and #$10
-    ;~ lda #(1 << 5)
-    ;~ bit ACIA_STATUS       
-    ;~ bne .success
--   lda ACIA_STATUS
-    and #(1 << 5)
-    beq -               ; Note there's an inverter inbetween, so we chack that level is HIGH
+-   +flag2_check
+    beq -
     +flag2_clear
-;    lda $dd01
     +userport_read
 .destination_pointer_pages = *+1
-    ;~ sta $0801,y         ; Default BASIC area, FIXME
-    sta $1001,y         ; Default BASIC area, FIXME
+    sta BASIC_AREA_START,y			; Careful, self-modifying code!
     iny
     bne -
 
-    inc .destination_pointer_pages+1
+    ; Move to next page
+    inc .destination_pointer_pages+1		; This modifies the previous code!
     dex
     bne -
 
-    ; transfer remaining bytes
+    ; Receive remaining bytes (i.e.: what is left, modulo 256)
 ++  ldx .response_size
     beq ++
 
@@ -864,13 +743,9 @@ wic64_load_and_run: ; EXPORT
     sta .destination_pointer_bytes+1
 
     ldy #$00
-;-   lda $dd0d
-;    and #$10
--   lda ACIA_STATUS
-    and #(1 << 5)
+-   +flag2_check
     beq -
     +flag2_clear
-;    lda $dd01
     +userport_read
 .destination_pointer_bytes = *+1
     sta $0000,y
@@ -879,17 +754,10 @@ wic64_load_and_run: ; EXPORT
     bne -
 
 ++  ; adjust basic end pointer
-!if PLUS4 {
-    lda #$01
+    lda #<BASIC_AREA_START
     sta .basic_end_pointer
-    lda #$10
+    lda #>BASIC_AREA_START
     sta .basic_end_pointer+1
-} else {
-    lda #$01
-    sta .basic_end_pointer
-    lda #$08
-    sta .basic_end_pointer+1
-}
 
     lda .response_size
     clc
@@ -905,9 +773,7 @@ wic64_load_and_run: ; EXPORT
     txs
 
     ; clear keyboard buffer
-    lda #$00
-    ;~ sta $c6          ; C64
-    sta $ef
+    +clear_keyboard_buffer
 
     ; reset system to defaults
 +   jsr .kernal_init_io
@@ -915,10 +781,7 @@ wic64_load_and_run: ; EXPORT
     jsr .basic_reset_program_pointer
 
     ; run program
-!if .basic_prepare_run != 0 {
-    jsr .basic_prepare_run
-}
-    jmp .basic_perform_run
+    +perform_run
 
 .response_size: !word $0000
 } ; end of !pseudopc .tapebuffer
@@ -1026,15 +889,9 @@ wic64_data_section_end: ; EXPORT
 
         !if (wic64_include_load_and_run != 0) {
             !warn "wic64 tapebuffer code size is ", .receive_and_run_size, " bytes"
-!if PLUS4 {
-            !if (.receive_and_run_size > 199) {
-                !error "wic64 tapebuffer code does not fit into $0334-$03FB (max. 199 bytes)"
+            !if (.receive_and_run_size > TAPE_BUFFER_SIZE) {
+                !error "wic64 tapebuffer code does not fit into tape buffer"
             }
-} else {
-            !if (.receive_and_run_size > 193) {
-                !error "wic64 tapebuffer code does not fit into $0332-$03F2 (max. 193 bytes)"
-            }
-}
         }
     }
 }

@@ -387,13 +387,11 @@ wic64_nop = $ea
     ; a timeout if the timeout length specified in wic64_timeout
     ; has been exceeded.
 
-    ; do a first cheap test for FLAG2 before wasting cycles
+    ; do a first cheap test for FLAG2 low before wasting cycles
     ; setting up the counters.
 
-    lda #(1 << 5)
-    bit ACIA_STATUS
+    +flag2_check
     !if (wic64_optimize_for_size == 0) {
-        ; FLAG2 is low, good!        
         bne .success
     } else {
         beq +
@@ -409,9 +407,8 @@ wic64_nop = $ea
 +   sta wic64_counters+1
 
    ; keep testing for FLAG2 until all counters are down to zero
-   lda #(1 << 5)
 .wait
-    bit ACIA_STATUS
+    +flag2_check			; Note this is slightly less efficient than original code
     !if (wic64_optimize_for_size == 0) {
         bne .success
     } else {
