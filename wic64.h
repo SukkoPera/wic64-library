@@ -380,32 +380,6 @@ wic64_nop = $ea
 ;---------------------------------------------------------
 
 !macro wic64_wait_for_handshake_code {
-    ;~ ; Produce timing pulse on PA2
-    ;~ txa
-    ;~ pha
-    
-    ;~ lda ACIA_CMD
-    ;~ tax
-    ;~ and #(1 << 3)
-    ;~ bne +
-
-    ;~ ; Signal is low, produce high pulse
-    ;~ txa
-    ;~ ora #(1 << 3)
-    ;~ sta ACIA_CMD
-    ;~ txa
-    ;~ sta ACIA_CMD
-    ;~ jmp ++
-
-    ;~ ; Signal is high, produce low pulse
-;~ +   txa
-    ;~ and #!(1 << 3)
-    ;~ sta ACIA_CMD
-    ;~ txa
-    ;~ sta ACIA_CMD
-    
-;~ ++  pla
-    ;~ tax
 
     ; wait until a handshake has been received from the ESP,
     ; e.g. the FLAG2 line on the userport has been asserted,

@@ -89,7 +89,7 @@
     sta ACIA_RESET
     +wait_raster
     
-    lda #((1 << 6) | (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0))       ; 1 stop bit, 5 data bits, oboard clock, 19200 bps
+    lda #((1 << 6) | (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0))       ; 1 stop bit, 5 data bits, onboard clock, 19200 bps
     sta ACIA_CTL
     lda #((1 << 3) | (1 << 1) | (1 << 0))      ; RX int disabled, RTS (PC2) and DTR (PA2) high
     sta ACIA_CMD
@@ -289,8 +289,7 @@ wic64_receive_header: ; EXPORT
     ;and #!$04
     ;sta $dd00
     +pa2_low
-    ;~ +handshake_pulse            ; AAAAAA
-    
+
     ; esp now sends a handshake to confirm change of direction
     +wic64_wait_for_handshake
 
@@ -379,9 +378,7 @@ wic64_destination_pointer_highbyte_inc = *
 .receive_remaining_bytes:
     ldx wic64_bytes_to_transfer
     beq .receive_done
-    ;~ bne +
-    ;~ jmp .receive_done
-;~ +
+
     ; skip copying current destination pointer position
     ; if a custom store instruction is installed
     lda wic64_store_instruction_bytes
@@ -467,7 +464,7 @@ wic64_limit_bytes_to_transfer_to_remaining_bytes:
 ;---------------------------------------------------------
 
 wic64_initialize: ; EXPORT
-    ; always start with a cleared FLAG2 bit in $dd0d
+    ; always start with a cleared FLAG2
     +flag2_clear
 
     ; make sure timeout is at least $01
@@ -520,7 +517,7 @@ wic64_finalize: ; EXPORT
     lda #$ff
     sta USERPORT
 
-    ; always exit with a cleared FLAG2 bit in $dd0d as well
+    ; always exit with a cleared FLAG2 as well
     +flag2_clear
 
     ; reset to user timeout
@@ -649,9 +646,6 @@ wic64_detect: !zone wic64_detect { ; EXPORT
 
     +wic64_send_header .request
     bcs .return
-    ;~ bcc +
-    ;~ jmp .return
-;~ +
 
     ; Set response size to the distinct value of $55 before receiving response
     ; header. Firmware 2.0.0 will send a response between 6 and 30 bytes, so if
@@ -794,13 +788,16 @@ wic64_load_and_run: ; EXPORT
     .basic_reset_program_pointer = $8af1    ; stxtpt
     .kernal_init_io = $ff84                 ; Jumps to IOINIT (Could work for C64, too)
     .kernal_reset_vectors = $ff8a           ; Jumps to RESTOR
-    .basic_perform_run = $8bd3
+    ;~ .kernal_reset_vectors = $ff8d           ; Jumps to VECTOR
+    .basic_prepare_run = $8bbe
+    .basic_perform_run = $8bdc
 } else {
     .tapebuffer = $0334
     .basic_end_pointer = $2d
     .basic_reset_program_pointer = $a68e
     .kernal_init_io = $fda3
     .kernal_reset_vectors = $ff8a
+    .basic_prepare_run = 0
     .basic_perform_run = $a7ae
 }
 }
@@ -821,7 +818,7 @@ wic64_load_and_run: ; EXPORT
     ; bank in kernal
     ;~ lda #$37
     ;~ sta $01
-    sta $ff3e                   ; Enable ROM
+    sta TED_ENABLE_ROMS                   ; Enable ROM
     sta $fdd0                   ; Lo ROM = BASIC, Hi ROM = KERNAL
 
     ; make sure nmi vector points to default nmi handler
@@ -835,7 +832,7 @@ wic64_load_and_run: ; EXPORT
     beq ++
 
     ldy #$00
-    ; Wait for falling edge on FLAG2 (+4: /DCD) - This is tricky because we don't have a "latching" mechanism on the +4
+    ; Wait for falling edge on FLAG2 (+4: /DCD)
 ;-   lda $dd0d
 ;    and #$10
     ;~ lda #(1 << 5)
@@ -872,6 +869,7 @@ wic64_load_and_run: ; EXPORT
 -   lda ACIA_STATUS
     and #(1 << 5)
     beq -
+    +flag2_clear
 ;    lda $dd01
     +userport_read
 .destination_pointer_bytes = *+1
@@ -908,8 +906,8 @@ wic64_load_and_run: ; EXPORT
 
     ; clear keyboard buffer
     lda #$00
-    ;~ sta $c6
-    sta $053f
+    ;~ sta $c6          ; C64
+    sta $ef
 
     ; reset system to defaults
 +   jsr .kernal_init_io
@@ -917,6 +915,9 @@ wic64_load_and_run: ; EXPORT
     jsr .basic_reset_program_pointer
 
     ; run program
+!if .basic_prepare_run != 0 {
+    jsr .basic_prepare_run
+}
     jmp .basic_perform_run
 
 .response_size: !word $0000
