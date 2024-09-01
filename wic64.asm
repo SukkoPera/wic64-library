@@ -11,7 +11,7 @@
 ; This file contains mostly technical comments.
 
 ; Include the platform file
-!if PLUS4 {
+!if PLUS4=1 {
     !src "platform_+4.asm"
 } else {
     !src "platform_c64.asm"
@@ -57,7 +57,7 @@ wic64_send: ; EXPORT
     jsr wic64_limit_bytes_to_transfer_to_remaining_bytes
 
 ; FIXME :(
-!if PLUS4 {
+!if PLUS4=1 {
 	jmp .wic64_send_critical_begin
 	!align 255,0
 }
@@ -682,7 +682,7 @@ wic64_load_and_run: ; EXPORT
 ;---------------------------------------------------------
 
 !addr {
-!if PLUS4 {
+!if PLUS4=1 {
     .tapebuffer = $0332                     ; We have 193 bytes here (up to $3f2)
     .basic_end_pointer = $2d
     .basic_reset_program_pointer = $8af1    ; stxtpt
