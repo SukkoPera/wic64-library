@@ -1,11 +1,11 @@
 !addr {
-	BASIC_AREA_START = $0801
-	
-	USERPORT_PORTA = $dd00
-	USERPORT_PORTB = $dd01
-	USERPORT_DDRA = $dd02			;  Each bit corresponds to an individual pin, 1 sets the pin as output, while 0 as input
-	USERPORT_DDRB = $dd03
-	USERPORT_STATUSA = $dd0d
+    BASIC_AREA_START = $0801
+    
+    USERPORT_PORTA = $dd00
+    USERPORT_PORTB = $dd01
+    USERPORT_DDRA = $dd02			;  Each bit corresponds to an individual pin, 1 sets the pin as output, while 0 as input
+    USERPORT_DDRB = $dd03
+    USERPORT_STATUSA = $dd0d
 }
 
 TAPE_BUFFER_SIZE = 193
@@ -20,7 +20,7 @@ TAPE_BUFFER_SIZE = 193
 
 ; This is called in cases where it is sufficient to pulse PC2, without reading the port if it saves time
 !macro handshake_pulse {
-	+userport_read							; Just read the port
+    +userport_read							; Just read the port
 }
 
 !macro userport_to_input {
@@ -34,11 +34,11 @@ TAPE_BUFFER_SIZE = 193
 }
 
 !macro userport_write {
-	sta USERPORT_PORTB
+    sta USERPORT_PORTB
 }
 
 !macro userport_read {
-	lda USERPORT_PORTB						; That's all we need, handshake is produced automatically on the third cycle after port access
+    lda USERPORT_PORTB						; That's all we need, handshake is produced automatically on the third cycle after port access
 }
 
 ; PA2 high => C64 sends, ESP receives
@@ -55,23 +55,15 @@ TAPE_BUFFER_SIZE = 193
     sta USERPORT_PORTA
 }
 
-;~ ; Wait for FLAG2 to go low
-;~ !macro flag2_wait {
-;~ ;    lda #$10
-;~ ;    bit $dd0d
-;~ -   lda USERPORT_STATUSA
-    ;~ and #$10
-    ;~ beq -
-;~ }
-
 ; Set A to non-zero if FLAG2 is low
+; On the C64 the FLAG2 line on the userport gets asserted, which sets bit 4 of $dd0d
 !macro flag2_check {
     lda #$10
-    bit $dd0d
+    bit USERPORT_STATUSA
 }
 
 !macro flag2_clear {
-	lda USERPORT_STATUSA					; Flag is cleared automatically upon read
+    lda USERPORT_STATUSA					; Flag is cleared automatically upon read
 }
 
 ; Called before a load_and_run is performed
@@ -94,5 +86,5 @@ TAPE_BUFFER_SIZE = 193
 
 ; Shall perform the BASIC "RUN" command
 !macro perform_run {
-	jmp $a7ae
+    jmp $a7ae
 }
