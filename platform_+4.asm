@@ -1,5 +1,6 @@
 ; +++ PLUS/4 INFORMATION +++
-:
+;
+; NOTE: The following is outdated, FIXME
 ;     The "PC2" signal (ack/strobe: byte read from/written to port, rising edge) is controlled through /RTS
 ;     The "PA2" signal (Direction: HIGH = C64/+4 => ESP, LOW = ESP => C64/+4) is controlled through /DTR
 ;     The "FLAG2" signal (ack/strobe: byte read from/written to port, falling edge) can be read through /DCD.
@@ -22,9 +23,9 @@ TAPE_BUFFER_SIZE = 199
     sta ACIA_RESET
     +wait_raster
     
-    lda #((1 << 6) | (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0))       ; 1 stop bit, 5 data bits, onboard clock, 19200 bps
+    lda #%01111111                  ; 1 stop bit, 5 data bits, onboard clock, 19200 bps
     sta ACIA_CTL
-    lda #((1 << 3) | (1 << 1) | (1 << 0))      ; RX int disabled, RTS (PC2) and DTR (PA2) high
+    lda #%00001011                  ; RX int disabled, RTS (PC2) and DTR (PA2) high
     sta ACIA_CMD
 
     lda #$1F
@@ -56,12 +57,19 @@ TAPE_BUFFER_SIZE = 199
 ; This could probably be optimized, since we know what values go into ACIA_CMD!
 !macro handshake_pulse {
     ; Pulse PC2 (RTS)
+!if ENABLE_OPTIMIZATIONS = 0 {
     lda ACIA_CMD
     and #!(1 << 3)      ; Low
     ; There is no need to insert NOPs here, the pulse is already wide enough
     sta ACIA_CMD
     ora #(1 << 3)       ; High
     sta ACIA_CMD
+} else {
+    lda #%00000011
+    sta ACIA_CMD
+    lda #%00001011
+    sta ACIA_CMD
+}
 }
 
 !macro userport_to_input {
@@ -93,20 +101,22 @@ TAPE_BUFFER_SIZE = 199
 	; Note that RTS must be high or the ACIA will not actually transmit anything
     lda #$1f
     sta ACIA_TX
-    +wait_raster         ; It looks like RTS won't go down while a transmission is in progress, so wait for transmission to end (can probably be shortened to ~350us)
+
+    ; It looks like RTS won't go down while a transmission is in progress, so we should wait for the transmission to end
+    ; (~350 us): 7 rasterlines (~448 us) should be enough but they are unreliable in practice (probably the way we are
+    ; doing it fails if the wait begins towards the bottom of the screen). 10 seem to do the job though! :)
+    ; (NOTE: Waiting on bit 4 of ACIA_STATUS does not work)
+    lda TED_VRASTER
+    clc
+    adc #10
+-   cmp TED_VRASTER
+    bne -
 }
 
 ; ESP sends, +4 receives
 !macro pa2_low {
 	+pa2_high			; Works since it will just toggle the line
 }
-
-;~ ; Wait for FLAG2 to go low
-;~ !macro flag2_wait {
-;~ -   lda ACIA_STATUS
-    ;~ and #(1 << 5)
-    ;~ beq -               ; Note there's an inverter inbetween, so we check that level is HIGH
-;~ }
 
 ; Set A to non-zero if FLAG2 is low
 !macro flag2_check {
@@ -116,17 +126,28 @@ TAPE_BUFFER_SIZE = 199
 
 !macro flag2_clear {
     ; Pulse DTR low
+!if ENABLE_OPTIMIZATIONS = 0 {
     lda ACIA_CMD
     and #!(1 << 0)      ; Low
     sta ACIA_CMD
     ora #(1 << 0)       ; High
     sta ACIA_CMD
+} else {
+    ; Take advantage of the fact that /DTR is bit 0 ;)
+    dec ACIA_CMD        ; Low
+    inc ACIA_CMD        ; High
+}
 }
 
 ; Called before a load_and_run is performed
 !macro prepare_run {
     sta TED_ENABLE_ROMS         ; Bank-in ROMs
     sta $fdd0					; Lo ROM = BASIC, Hi ROM = KERNAL
+
+    ; Hide cursor - Does not seem to work
+    lda #$ff
+    sta $ff0c
+    sta $ff0d
 }
 
 !macro clear_keyboard_buffer {
