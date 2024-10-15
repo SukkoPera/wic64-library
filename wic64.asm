@@ -12,7 +12,13 @@
 
 ; Include the platform file
 !if PLUS4=1 {
+!if PLUSVIA=1 {
+    ; Use the C64 board (WiC64) through the PlusVIA board
+    !src "platform_+4_via6522.asm"
+} else {
+    ; Use the dedicated +4 board (WiC+4)
     !src "platform_+4.asm"
+}
 } else {
     !src "platform_c64.asm"
 }
