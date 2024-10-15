@@ -426,7 +426,7 @@ wic64_nop = $ea
     bne .wait
 
 .timeout
-    +flag2_clear
+    //~ +flag2_clear        ; This should not be necessary, as wic64_handle_timeout will call wic64_finalize which does it anyway
     jmp wic64_handle_timeout
 
 .success
