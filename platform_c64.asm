@@ -1,11 +1,12 @@
 !addr {
     BASIC_AREA_START = $0801
-    
-    USERPORT_PORTA = $dd00
-    USERPORT_PORTB = $dd01
-    USERPORT_DDRA = $dd02			;  Each bit corresponds to an individual pin, 1 sets the pin as output, while 0 as input
-    USERPORT_DDRB = $dd03
-    USERPORT_STATUSA = $dd0d
+
+    USERPORT_BASE = $dd00
+    USERPORT_PORTA = USERPORT_BASE + 0
+    USERPORT_PORTB = USERPORT_BASE + 1
+    USERPORT_DDRA = USERPORT_BASE + 2		;  Each bit corresponds to an individual pin, 1 sets the pin as output, while 0 as input
+    USERPORT_DDRB = USERPORT_BASE + 3
+    USERPORT_ICR = USERPORT_BASE + 13
 }
 
 TAPE_BUFFER_SIZE = 193
@@ -59,11 +60,11 @@ TAPE_BUFFER_SIZE = 193
 ; On the C64 the FLAG2 line on the userport gets asserted, which sets bit 4 of $dd0d
 !macro flag2_check {
     lda #$10
-    bit USERPORT_STATUSA
+    bit USERPORT_ICR
 }
 
 !macro flag2_clear {
-    lda USERPORT_STATUSA					; Flag is cleared automatically upon read
+    lda USERPORT_ICR					; Flag is cleared automatically upon read
 }
 
 ; Called before a load_and_run is performed
