@@ -1,7 +1,18 @@
-; This platform file is meant for using the original WiC64 (NOT the +4 variant!) through a PlusVIA board
+; This platform file is meant for using the original WiC64 (NOT the +4 variant!) through a PlusVIA board (based on the
+; MOS 6522, the same chip that controls the userport on the VIC20, and whose successor - the 6526 - does the same job
+; on the C64).
 ;
-; - The "PC2" signal (ack/strobe from computer to ESP32: byte read from/written to port, rising edge) is controlled
-;   through PA5.
+; Note that the original WiC64 expects to be powered through the 9VAC rails, so you will have to provide that, or use my
+; variant and set JP2 to 5V.
+;
+; - The "PC2" signal (ack/strobe from computer to ESP32: byte read from/written to port, rising edge) is connected to
+;   userport pin 8. On the 6522 board by G. Knesebeck (by which PlusVIA was inspired) such pin is connected to PA5, and
+;   a previous version of this platform used that, but it meant that the handshake signals had to be bit-banged by the
+;   software driver, which is relatively slow. Although, it turned out that the CB2 pin of the 6522 can perform the
+;   handshake functions natively in hardware, making everything significantly faster (from ~19 to ~28 kb/s!), so this
+;   platform now expects a link between the CB2 pin (6522 pin 19) and pin 8 of the edge connector (no need to disconnect
+;   it from PA5, it will be configured as an input and cause no contention). A solder jumper will be added to PlusVIA in
+;   order to do this without external wires.
 ; - The "FLAG2" signal (ack/strobe from ESP32 to computer: byte read from/written to port, falling edge) can be read
 ;   through CB1.
 ; - The "PA2" signal (Direction: HIGH = C64/+4 => ESP, LOW = ESP => C64/+4) can be controlled directly.
@@ -16,6 +27,7 @@
     USERPORT_PORTA = USERPORT_BASE + 1
     USERPORT_DDRB = USERPORT_BASE + 2		;  Each bit corresponds to an individual pin, 1 sets the pin as output, while 0 as input
     USERPORT_DDRA = USERPORT_BASE + 3
+    USERPORT_ACR = USERPORT_BASE + 11       ; Auxiliary Control Register
     USERPORT_PCR = USERPORT_BASE + 12       ; Peripheral Control Register
     USERPORT_IFR = USERPORT_BASE + 13       ; Interrupt Flag Register
 }
@@ -36,30 +48,33 @@ TAPE_BUFFER_SIZE = 199
 
 ; HW configuration stuff that must be performed ONLY ONCE at startup
 !macro wic64_setup {
-    ; Ensure PA2 and PA5 (replaces /PC2) are set to output
+    ; Ensure PA2 is set to output and all else to input (including PA5 which now needs to be jumpered to CB2)
     lda USERPORT_DDRA
-    ora #%00100100
+    ora #%00000100
     sta USERPORT_DDRA
 
-    ; PA5 and PA2 start high
+    ; PA2 starts high
     lda #%00100100
     sta USERPORT_PORTA
 
-    ; Make sure IFR4 set by a *negative* transaction on CB1 and have CB2 go low when reading PORTB
-    ;~ lda USERPORT_PCR
-    ;~ and #%10001111
-    lda #%10001111
+    ; Make sure IFR4 set by a *negative* transaction on CB1 and set CB2 to "Pulse Output Mode": it will go low for one
+    ; clock cycle whenever PORTB is read or written to. This makes the HW take care of all the handshaking, yay!
+    lda #%10101111
     sta USERPORT_PCR
+
+    ; Enable input latching on PORTB: this is not strictly necessary but in theory it makes the communication more
+    ; reliable and it can hardly hurt (last famous words...)
+    lda #%00000010
+    sta USERPORT_ACR
 }
 
 ; This is called in cases where it is sufficient to pulse PC2, without reading the port if it saves time
+; Note that outside of this file, this macro is always called while in INPUT mode
 !macro handshake_pulse {
-    ; Pulse PA5 low
-    lda USERPORT_PORTA
-    and #!%00100000
-    sta USERPORT_PORTA
-    ora #%00100000
-    sta USERPORT_PORTA
+    ; It might seem odd, but we need to do a write to PORTB in order to have CB2 generate a handshake pulse. What we
+    ; write doesn't really matter since whenever we do this the port is fully in input mode, but the handshake pulse
+    ; will still be generated.
+    sta USERPORT_PORTB
 }
 
 !macro userport_to_input {
@@ -74,14 +89,12 @@ TAPE_BUFFER_SIZE = 199
 
 !macro userport_write {
     sta USERPORT_PORTB
-    +handshake_pulse	; We must do the handshake pulse manually
+    ; No need for any manual handshake pulse, it will be generated automatically by CB2
 }
 
 !macro userport_read {
     lda USERPORT_PORTB
-    pha                 ; We must preserve A here
-    +handshake_pulse	; Again, manually
-    pla
+    +handshake_pulse                ; Unfortunately the above doesn't generate the handshake
 }
 
 ; PA2 high => C64 sends, ESP receives
