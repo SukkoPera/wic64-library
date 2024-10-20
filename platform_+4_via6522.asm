@@ -9,7 +9,7 @@
 ;   userport pin 8. On the 6522 board by G. Knesebeck (by which PlusVIA was inspired) such pin is connected to PA5, and
 ;   a previous version of this platform used that, but it meant that the handshake signals had to be bit-banged by the
 ;   software driver, which is relatively slow. Although, it turned out that the CB2 pin of the 6522 can perform the
-;   handshake functions natively in hardware, making everything significantly faster (from ~19 to ~28 kb/s!), so this
+;   handshake functions natively in hardware, making everything significantly faster (from ~19 to ~41 kb/s!), so this
 ;   platform now expects a link between the CB2 pin (6522 pin 19) and pin 8 of the edge connector (no need to disconnect
 ;   it from PA5, it will be configured as an input and cause no contention). A solder jumper will be added to PlusVIA in
 ;   order to do this without external wires.
@@ -54,7 +54,7 @@ TAPE_BUFFER_SIZE = 199
     sta USERPORT_DDRA
 
     ; PA2 starts high
-    lda #%00100100
+    lda #%00000100
     sta USERPORT_PORTA
 
     ; Make sure IFR4 set by a *negative* transaction on CB1 and set CB2 to "Pulse Output Mode": it will go low for one
@@ -94,21 +94,31 @@ TAPE_BUFFER_SIZE = 199
 
 !macro userport_read {
     lda USERPORT_PORTB
-    +handshake_pulse                ; Unfortunately the above doesn't generate the handshake
+    +handshake_pulse           ; Unfortunately the above doesn't generate the handshake
 }
 
 ; PA2 high => C64 sends, ESP receives
 !macro pa2_high {
+!if ENABLE_OPTIMIZATIONS = 0 {
     lda USERPORT_PORTA
     ora #%00000100
     sta USERPORT_PORTA
+} else {
+    lda #%00000100
+    sta USERPORT_PORTA
+}
 }
 
 ; ESP sends, C64 receives
 !macro pa2_low {
+!if ENABLE_OPTIMIZATIONS = 0 {
     lda USERPORT_PORTA
     and #!%00000100
     sta USERPORT_PORTA
+} else {
+    lda #%00000000
+    sta USERPORT_PORTA
+}
 }
 
 ; Set A to non-zero if FLAG2 is low
@@ -118,10 +128,21 @@ TAPE_BUFFER_SIZE = 199
     bit USERPORT_IFR
 }
 
+; Called when FLAG2 must be cleared unconditionally (i.e.: begin/end transfer)
 !macro flag2_clear {
--   lda USERPORT_PORTB					; Flag is cleared automatically when reading the port register
-    +flag2_check
-    bne -
+-   lda USERPORT_PORTB			; Flag is cleared automatically when reading the port register
+    ;~ +flag2_check
+    ;~ bne -
+}
+
+; Called when FLAG2 must be cleared after the computer has just read data
+!macro flag2_clear_postread {
+    ; Nothing to do, as the flag is cleared by reading the port and well, the data was just read :)
+}
+
+; Called when FLAG2 must be cleared after receiving a write acknowledge from the ESP
+!macro flag2_clear_postwait {
+    lda USERPORT_PORTB
 }
 
 ; Called before a load_and_run is performed
