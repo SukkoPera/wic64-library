@@ -11,6 +11,17 @@
 
 TAPE_BUFFER_SIZE = 193
 
+; This is not used in wic64.asm but only in the tests and in this platform file
+!macro wait_raster .line {
+-   lda TED_VRASTER
+    cmp #.line
+    bne -
+}
+
+!macro wait_raster {
+    +wait_raster $cb
+}
+
 ; HW configuration stuff that must be performed ONLY ONCE at startup
 !macro wic64_setup {
     ; ensure pa2 is set to output
@@ -65,6 +76,14 @@ TAPE_BUFFER_SIZE = 193
 
 !macro flag2_clear {
     lda USERPORT_ICR					; Flag is cleared automatically upon read
+}
+
+!macro flag2_clear_postread {
+    ; Nothing to do, as the "bit USERPORT_ICR" during wait will also clear the flag (?)
+}
+
+!macro flag2_clear_postwait {
+    ; Nothing to do, as the "bit USERPORT_ICR" during wait will also clear the flag (?)
 }
 
 ; Called before a load_and_run is performed

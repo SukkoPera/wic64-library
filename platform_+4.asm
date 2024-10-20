@@ -1,5 +1,8 @@
 ; +++ PLUS/4 INFORMATION +++
 ;
+; This platform file is for the WiC+4 board variant connected to a Plus/4 through the userport or to a C16/116 through a
+; 16UP board.
+;
 ; - The "PC2" signal (ack/strobe from computer to ESP32: byte read from/written to port, rising edge) is controlled
 ;   through /RTS.
 ; - The "FLAG2" signal (ack/strobe from ESP32 to computer: byte read from/written to port, falling edge) can be read
@@ -17,6 +20,21 @@
 
 !addr {
 	BASIC_AREA_START = $1001
+
+!if USE_16UP_EXTADDR {
+    ACIA_BASE = $fd60
+    USERPORT = $fd70
+} else {
+    ACIA_BASE = $fd00
+    USERPORT = $fd10
+}
+
+    ACIA_TX = ACIA_BASE		        ; Write only
+    ACIA_RX = ACIA_BASE		        ; Read only
+    ACIA_RESET = ACIA_BASE + 1		; Write only
+    ACIA_STATUS = ACIA_BASE + 1		; Read only
+    ACIA_CMD = ACIA_BASE + 2
+    ACIA_CTL = ACIA_BASE + 3
 }
 
 TAPE_BUFFER_SIZE = 199
@@ -164,6 +182,14 @@ TAPE_BUFFER_SIZE = 199
     ; Note that the above needs to loop because sometimes the ESP will hold FLAG2 low long enough for it to be still low
     ; after we have cleared it... Maybe we could shorten the pulse length in the firmware and remove this check here...
     ; Or maybe we can just clear the flag later in the function!
+}
+
+!macro flag2_clear_postread {
+    +flag2_clear        ; No shortcut for clears after reads :(
+}
+
+!macro flag2_clear_postwait {
+    +flag2_clear        ; And neither after waits :(((
 }
 
 ; Called before a load_and_run is performed

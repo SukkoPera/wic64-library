@@ -78,6 +78,7 @@ wic64_source_pointer_pages = *+1
 -   lda $0000,y
     +userport_write
     +wic64_wait_for_handshake
+    +flag2_clear_postwait
     iny
     bne -
 
@@ -112,6 +113,7 @@ wic64_source_pointer_bytes = *+1
 -   lda $0000,y
     +userport_write
     +wic64_wait_for_handshake
+    +flag2_clear_postwait
     iny
     dex
     bne -
@@ -177,6 +179,7 @@ wic64_send_header: ; EXPORT
 -   lda .request_header,y
     +userport_write
     +wic64_wait_for_handshake
+    +flag2_clear_postwait
     iny
     cpy wic64_request_header_size
     bne -
@@ -206,6 +209,7 @@ wic64_receive_header: ; EXPORT
 
     ; esp now sends a handshake to confirm change of direction
     +wic64_wait_for_handshake
+    +flag2_clear_postwait
 
     ; esp now expects a handshake
     +handshake_pulse
@@ -214,6 +218,7 @@ wic64_receive_header: ; EXPORT
     ldx #$00
 -   +wic64_wait_for_handshake
     +userport_read
+    +flag2_clear_postread
     sta .response_header,x
     inx
     cpx wic64_response_header_size
@@ -278,6 +283,7 @@ wic64_receive: ; EXPORT
 
 -   +wic64_wait_for_handshake
     +userport_read
+    +flag2_clear_postread
 wic64_store_instruction_pages = *
 wic64_destination_pointer_pages = *+1
     sta $0000,y
@@ -312,6 +318,7 @@ wic64_destination_pointer_highbyte_inc = *
 +   ldy #$00
 -   +wic64_wait_for_handshake
     +userport_read
+    +flag2_clear_postread
 wic64_store_instruction_bytes = *
 wic64_destination_pointer_bytes = *+1
     sta $0000,y
@@ -578,6 +585,7 @@ wic64_detect: !zone wic64_detect { ; EXPORT
 
     ldy wic64_response_size
 -   +wic64_wait_for_handshake
+    +flag2_clear_postwait
     +handshake_pulse
     dey
     bne -
@@ -659,9 +667,11 @@ wic64_load_and_run: ; EXPORT
     ; manually receive and discard the load address
     +wic64_wait_for_handshake
     +userport_read
+    +flag2_clear_postread
 
     +wic64_wait_for_handshake
     +userport_read
+    +flag2_clear_postread
 
     ; copy .receive_and_run routine to tape buffer
     ldx #$00
@@ -727,10 +737,10 @@ wic64_load_and_run: ; EXPORT
     ldy #$00
 -   +flag2_check
     beq -
-    +flag2_clear
     +userport_read
 .destination_pointer_pages = *+1
     sta BASIC_AREA_START,y			; Careful, self-modifying code!
+    +flag2_clear_postread
     iny
     bne -
 
@@ -751,11 +761,11 @@ wic64_load_and_run: ; EXPORT
     ldy #$00
 -   +flag2_check
     beq -
-    +flag2_clear
     +userport_read
 .destination_pointer_bytes = *+1
     sta $0000,y
     iny
+    +flag2_clear_postread
     dex
     bne -
 

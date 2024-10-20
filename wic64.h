@@ -47,6 +47,8 @@ WIC64_FORCE_TIMEOUT = $fc
 WIC64_FORCE_ERROR = $fd
 WIC64_ECHO = $fe
 
+WIC64_GET_CTRLDATA = $c0
+
 WIC64_SUCCESS          = $00
 WIC64_INTERNAL_ERROR   = $01
 WIC64_CLIENT_ERROR     = $02
@@ -382,10 +384,9 @@ wic64_nop = $ea
 !macro wic64_wait_for_handshake_code {
 
     ; wait until a handshake has been received from the ESP,
-    ; e.g. the FLAG2 line on the userport has been asserted,
-    ; with sets bit 4 of $dd0d. Set the carry flag to indicate
-    ; a timeout if the timeout length specified in wic64_timeout
-    ; has been exceeded.
+    ; i.e. the FLAG2 line on the userport has been asserted.
+    ; Set the carry flag to indicate a timeout if the timeout
+    ; length specified in wic64_timeout has been exceeded.
 
     ; do a first cheap test for FLAG2 low before wasting cycles
     ; setting up the counters.
@@ -426,11 +427,9 @@ wic64_nop = $ea
     bne .wait
 
 .timeout
-    //~ +flag2_clear        ; This should not be necessary, as wic64_handle_timeout will call wic64_finalize which does it anyway
     jmp wic64_handle_timeout
 
 .success
-    +flag2_clear
 }
 
 !if (wic64_optimize_for_size == 0) {
