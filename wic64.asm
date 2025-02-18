@@ -13,8 +13,12 @@
 ; Include the platform file
 !if PLUS4=1 {
 !if PLUSVIA=1 {
-    ; Use the C64 board (WiC64) through the PlusVIA board
+    ; Use the C64 board (WiC64) through the PlusVIA board with a MOS 6522 chip
     !src "platform_+4_via6522.asm"
+} else if PLUSVIA=2 {
+    ; Use the C64 board (WiC64) through the PlusVIA board with a MC68A21 chip
+    !src "platform_+4_mc6821.asm"
+
 } else {
     ; Use the dedicated +4 board (WiC+4)
     !src "platform_+4.asm"
