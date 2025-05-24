@@ -18,7 +18,9 @@
 } else if PLUSVIA=2 {
     ; Use the C64 board (WiC64) through the PlusVIA board with a MC68A21 chip
     !src "platform_+4_mc6821.asm"
-
+} else if PLUSVIA=3 {
+    ; Use the C64 board (WiC64) through the Plus4i8255 board
+    !src "platform_+4_i8255.asm"
 } else {
     ; Use the dedicated +4 board (WiC+4)
     !src "platform_+4.asm"
