@@ -224,8 +224,8 @@ wic64_receive_header: ; EXPORT
     ldx #$00
 -   +wic64_wait_for_handshake
     +userport_read
-    +flag2_clear_postread
     sta .response_header,x
+    +flag2_clear_postread
     inx
     cpx wic64_response_header_size
     bne -
@@ -289,10 +289,10 @@ wic64_receive: ; EXPORT
 
 -   +wic64_wait_for_handshake
     +userport_read
-    +flag2_clear_postread
 wic64_store_instruction_pages = *
 wic64_destination_pointer_pages = *+1
     sta $0000,y
+    +flag2_clear_postread
     iny
     bne -
 
@@ -324,10 +324,10 @@ wic64_destination_pointer_highbyte_inc = *
 +   ldy #$00
 -   +wic64_wait_for_handshake
     +userport_read
-    +flag2_clear_postread
 wic64_store_instruction_bytes = *
 wic64_destination_pointer_bytes = *+1
     sta $0000,y
+    +flag2_clear_postread
 
     iny
     dex
