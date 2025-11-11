@@ -17,8 +17,6 @@
 ;   through CB1.
 ; - The "PA2" signal (Direction: HIGH = C64/+4 => ESP, LOW = ESP => C64/+4) can be controlled directly.
 
-!src "264.asm"
-
 !addr {
 	BASIC_AREA_START = $1001
 
