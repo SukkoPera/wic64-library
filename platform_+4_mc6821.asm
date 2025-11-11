@@ -12,8 +12,6 @@
 ;
 ; NOTE: All functions that switch to DDR by manipulating bit 2 of CR *MUST* switch back to PR before completion!!!
 
-!src "264.asm"
-
 !addr {
 	BASIC_AREA_START = $1001
 

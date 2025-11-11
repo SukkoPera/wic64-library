@@ -27,8 +27,6 @@
 ;
 ; NOTE: No tests were made with ENABLE_OPTIMIZATIONS disabled!
 
-!src "264.asm"
-
 !addr {
     I8255_BASE = $fe00
     I8255_PORTA = I8255_BASE
