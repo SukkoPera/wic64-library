@@ -2,7 +2,7 @@ include Makefile.inc
 SOURCES = *.asm *.h
 
 C64ASS = c64ass
-C64ASSFLAGS = -I W1000 -LIB .
+C64ASSFLAGS = -I W1000 -LIB . -DPLUS4=0
 
 .PHONY: dependencies dasm-export-verify dasm-export c64ass-acme-verify test prompt clean clean-artefacts
 

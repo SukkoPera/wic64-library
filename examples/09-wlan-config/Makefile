@@ -5,7 +5,7 @@ SOURCES = *.asm ../../wic64.asm ../../wic64.h
 .PHONY: all clean
 
 %.prg: %.asm $(SOURCES)
-	$(ASM) $(ASMFLAGS) $(INCLUDES) -DPLUS4=1 -f cbm -l $*.sym -o $*.prg  $*.asm
+	$(ASM) $(ASMFLAGS) $(INCLUDES) -f cbm -l $*.sym -o $*.prg  $*.asm
 
 all: main
 

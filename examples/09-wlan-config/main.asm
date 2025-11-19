@@ -17,26 +17,24 @@
     }
 }
 
+SHOW_PUBLIC_IP = 1
+
 ; From the ESP32 headers
 MAX_SSID_LEN = 32
 MAX_PASSPHRASE_LEN = 64
 
 !if PLUS4 {
-* = $1001
-    !word nextln, 0     ; second word is line number
-    !byte $9e
-    !text "4109"
-    !byte 0
-nextln:
-    !byte 0, 0
-
-* = $100d
+    * = $1001 ; 10 SYS 4112 ($1010)
+	!byte $0c, $10, $0a, $00, $9e, $20, $34, $31, $31, $32, $00, $00, $00
+	
+	* = $1010
 } else {
-* = $0801 ; 10 SYS 2064 ($0810)
-!byte $0c, $08, $0a, $00, $9e, $20, $32, $30, $36, $34, $00, $00, $00
+	* = $0801 ; 10 SYS 2064 ($0810)
+	!byte $0c, $08, $0a, $00, $9e, $20, $32, $30, $36, $34, $00, $00, $00
 
-* = $0810
+	* = $0810
 }
+
 jmp main
 
 !src "wic64.h"
@@ -97,7 +95,7 @@ board_ok:
     jsr CHROUT
     jsr CHROUT
 
-    +wait_raster
+    ;~ +wait_raster
     ;~ +wic64_set_timeout 15
     +wic64_execute cmd_connected, response, 15			; Note the timeout here must be higher than what is in cmd_connected (+1 is not enough!)
     bcc +
@@ -114,19 +112,21 @@ board_ok:
     jsr CHROUT
     jsr CHROUT
 
+!if SHOW_PUBLIC_IP {
     ; Dump public IP address
-    ;~ lda #$00							; Response buffer must be cleared for this command
-    ;~ tax
-;~ -   sta response,x
-    ;~ inx
-    ;~ cpx #MAX_RESPONSE_LEN
-    ;~ bcc -
-    ;~ +print str_cur_publ_ip
-    ;~ +wic64_execute cmd_get_url, response
-    ;~ +print response
-    ;~ lda #$0d
-    ;~ jsr CHROUT
-    ;~ jsr CHROUT
+    lda #$00							; Response buffer must be cleared for this command
+    tax
+-   sta response,x
+    inx
+    cpx #MAX_RESPONSE_LEN
+    bcc -
+    +print str_cur_publ_ip
+    +wic64_execute cmd_get_url, response
+    +print response
+    lda #$0d
+    jsr CHROUT
+    jsr CHROUT
+}
     
     ; Read SSID with BASIC INPUT call
 dossid:
@@ -147,7 +147,7 @@ dopass:
     +print prompt_pass
     jsr INPUT
     +to_ascii3 INPUT_BUFFER, cmd_conn_payload, cmd_conn_len_lo	; Leaves strlen in X (and we accept 0-length passwords)
-    txa					; Calculate end of data in buffer (lenght so far + length of password)
+    txa					; Calculate end of data in buffer (length so far + length of password)
     clc
     adc cmd_conn_len_lo
     tax
@@ -205,7 +205,9 @@ text_not_connected:		!pet "Not connected to network", $0d, $0d, $00
 str_mac:	!pet "MAC address: ", $00
 str_cur_ssid:	!pet "Configured SSID: ", $00
 str_cur_ip:	!pet "IP address: ", $00
+!if SHOW_PUBLIC_IP {
 str_cur_publ_ip:!pet "Public IP address: ", $00
+}
 prompt_ssid:	!pet "New SSID: ", $00
 prompt_pass:    !pet "Password: ", $00
 saving:		!pet $0d, "Saving config... ", $00
@@ -224,8 +226,10 @@ cmd_conn_len_hi:!byte $00
 cmd_conn_payload:!fill MAX_SSID_LEN + 1 + MAX_PASSPHRASE_LEN + 2, $00        ; Reserve space for SSID/password/etc
 
 cmd_connected:	!byte "R", WIC64_IS_CONNECTED, $01, $00, 10     ; <seconds>
+!if SHOW_PUBLIC_IP {
 cmd_get_url:	!byte "R", WIC64_HTTP_GET, 21, $00		; <url-size-l>, <url-size-h>, <url>
 url_ipify:	!text "https://api.ipify.org"
+}
 
 MAX_RESPONSE_LEN = 40
 response:	!fill MAX_RESPONSE_LEN

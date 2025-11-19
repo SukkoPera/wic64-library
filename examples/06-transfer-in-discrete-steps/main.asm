@@ -1,11 +1,20 @@
-* = $0801 ; 10 SYS 2064 ($0810)
-!byte $0c, $08, $0a, $00, $9e, $20, $32, $30, $36, $34, $00, $00, $00
+!if PLUS4 {
+    * = $1001 ; 10 SYS 4112 ($1010)
+	!byte $0c, $10, $0a, $00, $9e, $20, $34, $31, $31, $32, $00, $00, $00
+	
+	* = $1010
+} else {
+	* = $0801 ; 10 SYS 2064 ($0810)
+	!byte $0c, $08, $0a, $00, $9e, $20, $32, $30, $36, $34, $00, $00, $00
 
-* = $0810
+	* = $0810
+}
+
 jmp main
 
 !src "wic64.h"
 !src "wic64.asm"
+!src "macros.asm"
 
 bitmap  = $2000
 screen  = $0400
@@ -14,10 +23,10 @@ bgcolor = $d021
 
 main:
     ; first display the embedded koala image
-    jsr screen_off
+    +screen_off
     jsr bitmap_mode
     jsr display_embedded_koala
-    jsr screen_on
+    +screen_on
 
     +wic64_initialize
     +wic64_set_timeout_handler handle_timeout
@@ -51,8 +60,7 @@ echo_request: !byte "R", WIC64_ECHO, <10000, >10000
 
 handle_timeout:
 handle_error:
-    lda #$02
-    sta $d020
+    +set_background COLOR_RED
     rts
 
 sync_to_top:
@@ -64,24 +72,18 @@ sync_to_top:
 
 screen_off:
     jsr sync_to_top
-    lda $d011
-    and #!$10
-    sta $d011
+    +screen_off
     rts
 
 screen_on:
     jsr sync_to_top
-    lda $d011
-    ora #$10
-    sta $d011
+    +screen_on
     rts
 
 bitmap_mode:
     ; all black
-    lda #$00
-    sta $d020
-    sta $d021
-    sta $0286
+    +set_border COLOR_BLACK
+    +set_background COLOR_BLACK
 
     ; bitmap mode on
     lda $d011
@@ -127,7 +129,7 @@ display_embedded_koala:
     bne -
 
     lda embedded_bgcolor
-    sta $d021
+    sta REG_BACKGROUND
     rts
 
 delete_koala_from_memory:
@@ -155,8 +157,7 @@ delete_koala_from_memory:
     +fill_pages bitmap, $20, $00
     +fill_pages screen, $04, $20
     +fill_pages color, $04, $00
-    lda #$00
-    sta $d020
+    +set_border COLOR_BLACK
     rts
 
 * = $2000

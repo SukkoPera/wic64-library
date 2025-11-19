@@ -37,17 +37,17 @@
 
 TAPE_BUFFER_SIZE = 199
 
-; This is not used in wic64.asm but only in the tests
-!macro wait_raster .line {
--   lda TED_VRASTER
-    cmp #.line
-    bne -
-}
+;~ ; This is not used in wic64.asm but only in the tests
+;~ !macro wait_raster .line {
+;~ -   lda TED_VRASTER
+    ;~ cmp #.line
+    ;~ bne -
+;~ }
 
-; Ditto
-!macro wait_raster {
-    +wait_raster $cb
-}
+;~ ; Ditto
+;~ !macro wait_raster {
+    ;~ +wait_raster $cb
+;~ }
 
 ; HW configuration stuff that must be performed ONLY ONCE at startup
 !macro wic64_setup {
@@ -203,7 +203,7 @@ TAPE_BUFFER_SIZE = 199
 
 ; Called before a load_and_run is performed
 !macro prepare_run {
-    sta TED_ENABLE_ROMS         ; Bank-in ROMs
+    sta $ff3e			        ; Bank-in ROMs
     sta $fdd0					; Lo ROM = BASIC, Hi ROM = KERNAL
 
     ; Hide cursor - Does not seem to work

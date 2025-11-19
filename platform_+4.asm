@@ -194,7 +194,7 @@ TAPE_BUFFER_SIZE = 199
 
 ; Called before a load_and_run is performed
 !macro prepare_run {
-    sta TED_ENABLE_ROMS         ; Bank-in ROMs
+    sta $ff3e			        ; Bank-in ROMs
     sta $fdd0					; Lo ROM = BASIC, Hi ROM = KERNAL
 
     ; Hide cursor - Does not seem to work
