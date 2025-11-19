@@ -409,7 +409,7 @@ wic64_nop = $ea
     ; setting up the counters.
 
     +flag2_check
-    !if (wic64_optimize_for_size == 0) {
+    !if (wic64_optimize_for_size = 0) {
         bne .success
     } else {
         beq +
@@ -427,7 +427,7 @@ wic64_nop = $ea
    ; keep testing for FLAG2 until all counters are down to zero
 .wait
     +flag2_check			; Note this is slightly less efficient than original code
-    !if (wic64_optimize_for_size == 0) {
+    !if (wic64_optimize_for_size = 0) {
         bne .success
     } else {
         beq +
@@ -449,7 +449,7 @@ wic64_nop = $ea
 .success
 }
 
-!if (wic64_optimize_for_size == 0) {
+!if (wic64_optimize_for_size = 0) {
     !macro wic64_wait_for_handshake {
         +wic64_wait_for_handshake_code
     }

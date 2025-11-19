@@ -1,17 +1,17 @@
 ;ASCII/PETSCII conversion tables
 ;cribbed from http://www.ffd2.com/fridge/misc/petcom.c
 
-;given a PETSCII char in A, return equivalent ASCII
-native_to_ascii:
-  tax
-  lda petscii_to_ascii_table, x
-  rts
+;~ ;given a PETSCII char in A, return equivalent ASCII
+;~ native_to_ascii:
+  ;~ tax
+  ;~ lda petscii_to_ascii_table, x
+  ;~ rts
 
-;given an ASCII char in A, return equivalent PETSCII
-ascii_to_native:
-  tax
-  lda ascii_to_petscii_table, x
-  rts
+;~ ;given an ASCII char in A, return equivalent PETSCII
+;~ ascii_to_native:
+  ;~ tax
+  ;~ lda ascii_to_petscii_table, x
+  ;~ rts
 
 ; Converts a string from ASCII to PETSCII in-place
 ; Leaves strlen in X

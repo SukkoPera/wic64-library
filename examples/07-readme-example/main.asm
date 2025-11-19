@@ -1,17 +1,18 @@
 ; include the wic64 header file containing the macro definitions
 !source "wic64.h"
+!source "macros.asm"
 
-; just a simple macro to print a string
-!macro print .string {
-    lda #<.string
-    ldy #>.string
-    jsr $ab1e
+!if PLUS4 {
+    * = $1001 ; 10 SYS 4112 ($1010)
+	!byte $0c, $10, $0a, $00, $9e, $20, $34, $31, $31, $32, $00, $00, $00
+	
+	* = $1010
+} else {
+	* = $0801 ; 10 SYS 2064 ($0810)
+	!byte $0c, $08, $0a, $00, $9e, $20, $32, $30, $36, $34, $00, $00, $00
+
+	* = $0810
 }
-
-* = $0801 ; 10 SYS 2064 ($0810)
-!byte $0c, $08, $0a, $00, $9e, $20, $32, $30, $36, $34, $00, $00, $00
-
-* = $0810
 
 main:
     +wic64_detect                           ; detect wic64 device and firmware
