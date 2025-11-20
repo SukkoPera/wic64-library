@@ -16,18 +16,22 @@
 ; 
 ; /DCD can be read through bit 5 of $FD01.
 
-!src "264.asm"
+!ifndef USE_16UP_EXTADDR {
+	USE_16UP_EXTADDR = 0
+}
 
 !addr {
 	BASIC_AREA_START = $1001
+	
+	TED_VRASTER = $ff1d
 
-!if USE_16UP_EXTADDR {
-    ACIA_BASE = $fd60
-    USERPORT = $fd70
-} else {
-    ACIA_BASE = $fd00
-    USERPORT = $fd10
-}
+	!if USE_16UP_EXTADDR {
+		ACIA_BASE = $fd60
+		USERPORT = $fd70
+	} else {
+		ACIA_BASE = $fd00
+		USERPORT = $fd10
+	}
 
     ACIA_TX = ACIA_BASE		        ; Write only
     ACIA_RX = ACIA_BASE		        ; Read only
