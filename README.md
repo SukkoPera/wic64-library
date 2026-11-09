@@ -4,6 +4,9 @@ This is a modified version of the [WiC64 WiFI Adapter Library](https://github.co
 
 The WiC64 is an ESP32-based adapter that allows Commodore computers to send and receive HTTP requests and to communicate with remote hosts via TCP connections. This library abstracts the low level communication protocol between the C64 and the WiC64 to provide a simple macro based interface for sending commands to the WiC64 and receiving the response to C64 memory or processing it on the fly. It is written in acme cross assembler.
 
+> [!IMPORTANT]
+> It is important to understand that **the WiC64 is not another modem-like peripheral, it is rather a fully-fledged, blazing fast network interface**. It can reach ~30 kb/s on the Plus/4!
+
 Please refer to the documentation of the original library to understand how to use it in your programs.
 
 ## Hardware Interface
@@ -27,10 +30,10 @@ TBD: More info on this
 ### Other Interfaces - Unsupported!
 Just for completeness, here is some information on other things I tried, meant for the advanced curious reader:
 - Plus/4 User Port: This required a custom-designed board, which is already enough of a drawback, and anyway never got even close to the speed and reliability of the other interfaces, due to the lack of HW handshaking lines.
-- i8255 chip through a [https://github.com/SukkoPera/Plus4i8255](Plus4i8255) board: This would also require a custom-designed board or some very awkward connections, but at least it was relatively reliable. It was not as fast as the PlusVIA though (about 66%).
+- i8255 chip through a [Plus4i8255](https://github.com/SukkoPera/Plus4i8255) board: This also required a custom-designed board or some very awkward connections, but at least it was relatively reliable. It was not as fast as the PlusVIA though (about 66%).
 - PlusVIA with MC6821: This actually works pretty well, but unfortunately it is impossible to buy a brand new MC6821 chip.
 
-Due to how the wic64-library is implemented, and in order to achieve the fastest possible speed, it is not possible to support all of the above interfaces at the same time. Although, the code for all of the above interfaces is still present and can be enabled by defining some macros, see the various `platform_*.asm` files. Although, I cannot guarantee that they will keep working in the future, so please keep in mind that **the PlusVIA with a 6522 chip is the only supported interface**. Everything else shall be considered experimental and is completely unsupported.
+Due to how the wic64-library is implemented, and in order to achieve the fastest possible speed, it is not possible to support all of the above interfaces at the same time. Although, the code for all of the above interfaces is still present and can be enabled by defining some macros at build time, see the various `platform_*.asm` files. Although, I cannot guarantee that they will keep working in the future, so please keep in mind that **the PlusVIA with a 6522 chip is the only supported interface**. Everything else shall be considered experimental and is completely unsupported. Please do not release any software using one of the other interfaces.
 
 ## Example
 
