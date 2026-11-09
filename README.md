@@ -5,7 +5,7 @@ This is a modified version of the [WiC64 WiFI Adapter Library](https://github.co
 The WiC64 is an ESP32-based adapter that allows Commodore computers to send and receive HTTP requests and to communicate with remote hosts via TCP connections. This library abstracts the low level communication protocol between the C64 and the WiC64 to provide a simple macro based interface for sending commands to the WiC64 and receiving the response to C64 memory or processing it on the fly. It is written in acme cross assembler.
 
 > [!IMPORTANT]
-> It is important to understand that **the WiC64 is not another modem-like peripheral, it is rather a fully-fledged, blazing fast network interface**. It can reach ~30 kb/s on the Plus/4!
+> **The WiC64 is not just another modem-like peripheral, it is rather a fully-fledged, blazing-fast network interface!** It can reach ~30 kb/s on the Plus/4!
 
 Please refer to the documentation of the original library to understand how to use it in your programs.
 
@@ -36,7 +36,6 @@ Just for completeness, here is some information on other things I tried, meant f
 Due to how the wic64-library is implemented, and in order to achieve the fastest possible speed, it is not possible to support all of the above interfaces at the same time. Although, the code for all of the above interfaces is still present and can be enabled by defining some macros at build time, see the various `platform_*.asm` files. Although, I cannot guarantee that they will keep working in the future, so please keep in mind that **the PlusVIA with a 6522 chip is the only supported interface**. Everything else shall be considered experimental and is completely unsupported. Please do not release any software using one of the other interfaces.
 
 ## Example
-
 This example demonstrates basic usage of the library, including timeout and
 error handling.
 
