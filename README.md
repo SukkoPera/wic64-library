@@ -16,13 +16,14 @@ As stated above, unfortunately the WiC64 cannot just be plugged in the Plus/4 us
 - It makes the interface very close to that used on the C64, which means that no modifications to the WiC64 hardware and firmware are required. Additionally, we can also recycle most of the code on the software side.
 - It was the fastest interface in my tests.
 - It is very cheap to build and can be completely built with new components: you just need a 6522 chip and a GAL!
-- It can be used on the Plus/4, Commodore 16 and Commodore 116, enabling Internet access for the whole 264 family.
+- It can be used on the Plus/4, Commodore 16 and Commodore 116, enabling Internet access across the whole 264 family.
 
 > [!IMPORTANT]
 > The PlusVIA board must be configured with the default address ($FDCx) and with JP3 set to CB2.
 
 The only drawback is that the WiC64 is normally powered with 9VAC, which is not directly provided by the board, but there are simple solutions to this problem:
-- On the Plus/4, build a cable that takes 9V AC from the user port and provided the PlusVIA with it.
+- On the Plus/4, build a cable that takes 9V AC from the user port and provided the PlusVIA with it:
+  ![9VAC cable](./img/9vac_from_userport.svg)
 - Use an external power supply (this should be 9V AC but others *might* also work).
 - Make a small modification to the WiC64 board allowing it to be powered from +5V DC, all you need is a diode!
 

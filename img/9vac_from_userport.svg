@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 340" width="820" height="340">
+  <defs>
+    
+    <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#d0e1f0" stroke-width="0.6" />
+    </pattern>
+    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+      <rect width="50" height="50" fill="url(#smallGrid)" />
+      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#9ec0de" stroke-width="1" />
+    </pattern>
+  </defs>
+
+  
+  <rect width="100%" height="100%" fill="#ffffff" />
+  <rect width="100%" height="100%" fill="url(#grid)" />
+
+  
+  <g id="connector" transform="translate(40, 210)">
+    
+    <rect x="0" y="18" width="28" height="28" rx="2" fill="#0d6efd" stroke="#083982" stroke-width="1.5" />
+    <ellipse cx="14" cy="27" rx="8" ry="4" fill="#072b61" stroke="#083982" stroke-width="1" />
+    
+    <rect x="276" y="18" width="28" height="28" rx="2" fill="#0d6efd" stroke="#083982" stroke-width="1.5" />
+    <ellipse cx="290" cy="27" rx="8" ry="4" fill="#072b61" stroke="#083982" stroke-width="1" />
+
+    
+    <rect x="28" y="14" width="248" height="54" rx="2" fill="#1374f2" stroke="#083982" stroke-width="1.5" />
+    <rect x="34" y="14" width="236" height="10" fill="#0b4da8" />
+
+    
+     <rect x="42" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="61" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="80" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="99" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="118" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="137" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="156" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="175" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="194" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="213" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="232" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+     <rect x="251" y="0" width="11" height="22" rx="3" fill="#e5b83b" stroke="#5c4508" stroke-width="1.2" />
+
+    
+    <g font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" fill="#051c3d" text-anchor="middle">
+      <text x="47.5" y="36">12</text>
+      <text x="66.5" y="36">11</text>
+      <text x="85.5" y="36">10</text>
+      <text x="104.5" y="36">9</text>
+      <text x="123.5" y="36">8</text>
+      <text x="142.5" y="36">7</text>
+      <text x="161.5" y="36">6</text>
+      <text x="180.5" y="36">5</text>
+      <text x="199.5" y="36">4</text>
+      <text x="218.5" y="36">3</text>
+      <text x="237.5" y="36">2</text>
+      <text x="256.5" y="36">1</text>
+    </g>
+
+    
+    <text x="152" y="61" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="bold" fill="#051c3d" text-anchor="middle">TOP</text>
+
+    
+    <text x="152" y="96" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#111111" text-anchor="middle">Plus/4 User Port</text>
+  </g>
+
+  
+  <g id="wires">
+    
+    <path d="M 106.5 218 C 106.5 85, 250 75, 420 110 C 550 135, 630 95, 705 90" fill="none" stroke="#111111" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 106.5 218 C 106.5 85, 250 75, 420 110 C 550 135, 630 95, 705 90" fill="none" stroke="#229954" stroke-width="5" stroke-linecap="round" />
+    
+    <circle cx="106.5" cy="218" r="5.5" fill="#d0d7de" stroke="#333333" stroke-width="1.2" />
+
+    
+    <path d="M 125.5 218 C 125.5 110, 260 105, 420 140 C 550 165, 630 135, 705 130" fill="none" stroke="#111111" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 125.5 218 C 125.5 110, 260 105, 420 140 C 550 165, 630 135, 705 130" fill="none" stroke="#c0392b" stroke-width="5" stroke-linecap="round" />
+    
+    <circle cx="125.5" cy="218" r="5.5" fill="#d0d7de" stroke="#333333" stroke-width="1.2" />
+
+    
+    <g transform="translate(702, 81)">
+      <rect x="0" y="0" width="46" height="17" rx="1.5" fill="#222222" stroke="#000000" stroke-width="1.2" />
+      <rect x="33" y="4" width="8" height="9" fill="#cccccc" />
+      <rect x="10" y="6" width="5" height="5" fill="#111111" stroke="#444444" stroke-width="0.8" />
+    </g>
+
+    <g transform="translate(702, 121)">
+      <rect x="0" y="0" width="46" height="17" rx="1.5" fill="#222222" stroke="#000000" stroke-width="1.2" />
+      <rect x="33" y="4" width="8" height="9" fill="#cccccc" />
+      <rect x="10" y="6" width="5" height="5" fill="#111111" stroke="#444444" stroke-width="0.8" />
+    </g>
+  </g>
+</svg>
