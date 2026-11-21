@@ -10,7 +10,7 @@
 ;
 ; This file contains mostly technical comments.
 
-; Include the platform file
+; Include the interface file
 !ifndef PLUS4 {
     PLUS4=0
 }
@@ -28,22 +28,22 @@
 	
 	!if HWINTERFACE=1 {
 		; Use the C64 board (WiC64) through the PlusVIA board with a MOS 6522 chip
-		!src "platform_+4_via6522.asm"
+		!src "interface_+4_via6522.asm"
 	} else if HWINTERFACE=2 {
 		; Use the C64 board (WiC64) through the PlusVIA board with a MC68A21 chip
 		!warn "Building with the PlusVIA/6821 HW interface - This is DEPRECATED and UNSUPPORTED!"
-		!src "platform_+4_mc6821.asm"
+		!src "interface_+4_mc6821.asm"
 	} else if HWINTERFACE=3 {
 		; Use the C64 board (WiC64) through the Plus4i8255 board
 		!warn "Building with the Plus4i8255 HW interface - This is DEPRECATED and UNSUPPORTED!"
-		!src "platform_+4_i8255.asm"
+		!src "interface_+4_i8255.asm"
 	} else {
 		; Use the dedicated +4 board (WiC+4)
 		!warn "Building for the Plus/4 variant of the WiC64 interface - This is DEPRECATED and UNSUPPORTED!"
-		!src "platform_+4.asm"
+		!src "interface_+4.asm"
 	}
 } else {
-    !src "platform_c64.asm"
+    !src "interface_c64.asm"
 }
 
 !zone wic64 {

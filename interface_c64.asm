@@ -3,7 +3,7 @@
 ; Copyright (C) 2024-2026 SukkoPera
 ;---------------------------------------------------------
 ;
-; This platform is meant to support the original WiC64 board on the C64. It shall produce code that is *very similar* to
+; This interface is meant to support the original WiC64 board on the C64. It shall produce code that is *very similar* to
 ; what you would get with the original library. There will probably be some minor differences due to making the code
 ; more portable.
 

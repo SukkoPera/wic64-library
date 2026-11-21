@@ -3,7 +3,7 @@
 ; Copyright (C) 2024-2026 SukkoPera
 ;---------------------------------------------------------
 ;
-; This platform file is meant for using the original WiC64 (NOT the +4 variant!) through a PlusVIA board (based on the
+; This interface file is meant for using the original WiC64 (NOT the +4 variant!) through a PlusVIA board (based on the
 ; MOS 6522, the same chip that controls the userport on the VIC20, and whose successor - the 6526 - does the same job
 ; on the C64).
 ;
@@ -14,10 +14,10 @@
 ;
 ; - The "PC2" signal (ack/strobe from computer to ESP32: byte read from/written to port, rising edge) is connected to
 ;   userport pin 8. On the 6522 board by G. Knesebeck (by which PlusVIA was inspired) such pin is connected to PA5, and
-;   a previous version of this platform used that, but it meant that the handshake signals had to be bit-banged by the
+;   a previous version of this interface used that, but it meant that the handshake signals had to be bit-banged by the
 ;   software driver, which is relatively slow. Although, it turned out that the CB2 pin of the 6522 can perform the
 ;   handshake functions natively in hardware, making everything significantly faster (from ~19 to ~41 kb/s!), so this
-;   platform now expects the CB2 signal on pin 8 of the edge connector. This can be provided by properly setting JP3
+;   interface now expects the CB2 signal on pin 8 of the edge connector. This can be provided by properly setting JP3
 ;   on the PlusVIA board.
 ; - The "FLAG2" signal (ack/strobe from ESP32 to computer: byte read from/written to port, falling edge) can be read
 ;   through CB1.

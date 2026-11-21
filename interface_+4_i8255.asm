@@ -3,7 +3,7 @@
 ; Copyright (C) 2024-2026 SukkoPera
 ;---------------------------------------------------------
 ;
-; This platform file is meant for using the original WiC64 (NOT the +4 variant!) through a Plus4i8255 board,
+; This interface file is meant for using the original WiC64 (NOT the +4 variant!) through a Plus4i8255 board,
 ; https://github.com/SukkoPera/Plus4i8255
 ;
 ; Note that the original WiC64 expects to be powered through the 9VAC rails, so you will have to provide that, or use my

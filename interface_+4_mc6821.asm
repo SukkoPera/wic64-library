@@ -3,10 +3,10 @@
 ; Copyright (C) 2024-2026 SukkoPera
 ;---------------------------------------------------------
 ;
-; This platform file is meant for using the original WiC64 (NOT the +4 variant!) through a PlusVIA board with an MC68A21
+; This interface file is meant for using the original WiC64 (NOT the +4 variant!) through a PlusVIA board with an MC68A21
 ; chip (or faster, like MC68B21).
 ;
-; - Like for the 6522 platform, we assume pin 8 of the userport connector is connected to CB2 ("PC2" signal (ack/strobe
+; - Like for the 6522 interface, we assume pin 8 of the userport connector is connected to CB2 ("PC2" signal (ack/strobe
 ;   from computer to ESP32: byte read from/written to port, rising edge).
 ; - The "FLAG2" signal (ack/strobe from ESP32 to computer: byte read from/written to port, falling edge) can be read
 ;   through CB1.
