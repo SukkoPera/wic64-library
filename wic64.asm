@@ -13,30 +13,33 @@
 ; Include the platform file
 !ifndef PLUS4 {
     PLUS4=0
-} else {
-	; Default interface is MC6821
-	!ifndef PLUSVIA {
-		PLUSVIA=2
-	}
-	
-	; By default we enable optimizations
-	!ifndef ENABLE_OPTIMIZATIONS {
-		ENABLE_OPTIMIZATIONS=1
-	}
+}
+
+; By default we enable optimizations
+!ifndef ENABLE_OPTIMIZATIONS {
+	ENABLE_OPTIMIZATIONS=1
 }
 
 !if PLUS4=1 {
-	!if PLUSVIA=1 {
+	; The only officially supported interface is PlusVIA with a 6522
+	!ifndef HWINTERFACE {
+		HWINTERFACE=1
+	}
+	
+	!if HWINTERFACE=1 {
 		; Use the C64 board (WiC64) through the PlusVIA board with a MOS 6522 chip
 		!src "platform_+4_via6522.asm"
-	} else if PLUSVIA=2 {
+	} else if HWINTERFACE=2 {
 		; Use the C64 board (WiC64) through the PlusVIA board with a MC68A21 chip
+		!warn "Building with the PlusVIA/6821 HW interface - This is DEPRECATED and UNSUPPORTED!"
 		!src "platform_+4_mc6821.asm"
-	} else if PLUSVIA=3 {
+	} else if HWINTERFACE=3 {
 		; Use the C64 board (WiC64) through the Plus4i8255 board
+		!warn "Building with the Plus4i8255 HW interface - This is DEPRECATED and UNSUPPORTED!"
 		!src "platform_+4_i8255.asm"
 	} else {
 		; Use the dedicated +4 board (WiC+4)
+		!warn "Building for the Plus/4 variant of the WiC64 interface - This is DEPRECATED and UNSUPPORTED!"
 		!src "platform_+4.asm"
 	}
 } else {
@@ -827,7 +830,7 @@ wic64_load_and_run: ; EXPORT
 }
 
 .receive_and_run:
-!pseudopc .tapebuffer {         ; Assemble to be run from .tapebuffer
+!pseudopc .tapebuffer {
 
     ; the receiving code does not include timeout detection
     ; due to the size restrictions of the tapebuffer area.

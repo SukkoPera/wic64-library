@@ -1,5 +1,12 @@
 !addr {
+    !if PLUS4 {
+        INPUT = $885a
+    } else {
+        INPUT = $a560
+    }
 	CHROUT = $ffd2
+
+	INPUT_BUFFER = $0200
 	
 	!if PLUS4 {
 		SCREEN_ONOFF_REG = $ff06

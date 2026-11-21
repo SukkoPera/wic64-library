@@ -1,3 +1,12 @@
+;---------------------------------------------------------
+; WiC64 C64 Interface
+; Copyright (C) 2024-2026 SukkoPera
+;---------------------------------------------------------
+;
+; This platform is meant to support the original WiC64 board on the C64. It shall produce code that is *very similar* to
+; what you would get with the original library. There will probably be some minor differences due to making the code
+; more portable.
+
 !addr {
     BASIC_AREA_START = $0801
 
@@ -10,17 +19,6 @@
 }
 
 TAPE_BUFFER_SIZE = 193
-
-; This is not used in wic64.asm but only in the tests and in this platform file
-!macro wait_raster .line {
--   lda TED_VRASTER
-    cmp #.line
-    bne -
-}
-
-!macro wait_raster {
-    +wait_raster $cb
-}
 
 ; HW configuration stuff that must be performed ONLY ONCE at startup
 !macro wic64_setup {

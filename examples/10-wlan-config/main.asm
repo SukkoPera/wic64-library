@@ -1,21 +1,7 @@
-; TODO: Replace with include files
-!addr {
-    !if PLUS4 {
-        INPUT = $885a
-        INPUT_BUFFER = $0200
-        CHROUT = $ffd2
-
-        BACKGROUND = $ff19
-        BORDER = $ff15
-    } else {
-        INPUT = $a560
-        INPUT_BUFFER = $0200
-        CHROUT = $ffd2
-
-        BACKGROUND = $d020
-        BORDER = $d021
-    }
-}
+;---------------------------------------------------------
+; WiC64 Configuration Program
+; Copyright (C) 2024-2026 SukkoPera
+;---------------------------------------------------------
 
 SHOW_PUBLIC_IP = 1
 
@@ -43,9 +29,9 @@ jmp main
 !src "charconv.asm"
 
 main:
-    lda #$00                ; Black fore and background
-    sta BACKGROUND
-    sta BORDER
+	+set_border COLOR_BLACK		; Black fore and background
+    +set_background COLOR_BLACK
+    
     lda #$0e                ; Go lower case
     jsr CHROUT
     lda #$1e                ; Green text color

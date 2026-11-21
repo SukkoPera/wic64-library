@@ -1,3 +1,8 @@
+;---------------------------------------------------------
+; WiC64 Plus4i8255 Interface
+; Copyright (C) 2024-2026 SukkoPera
+;---------------------------------------------------------
+;
 ; This platform file is meant for using the original WiC64 (NOT the +4 variant!) through a Plus4i8255 board,
 ; https://github.com/SukkoPera/Plus4i8255
 ;
@@ -36,18 +41,6 @@
 }
 
 TAPE_BUFFER_SIZE = 199
-
-;~ ; This is not used in wic64.asm but only in the tests
-;~ !macro wait_raster .line {
-;~ -   lda TED_VRASTER
-    ;~ cmp #.line
-    ;~ bne -
-;~ }
-
-;~ ; Ditto
-;~ !macro wait_raster {
-    ;~ +wait_raster $cb
-;~ }
 
 ; HW configuration stuff that must be performed ONLY ONCE at startup
 !macro wic64_setup {

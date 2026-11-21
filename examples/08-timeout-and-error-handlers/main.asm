@@ -12,9 +12,9 @@
 
 jmp main
 
-!source "wic64.h"
-!source "wic64.asm"
-!source "macros.asm"
+!src "wic64.h"
+!src "wic64.asm"
+!src "macros.asm"
 
 main:
     +wic64_set_timeout_handler timeout

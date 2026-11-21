@@ -1,8 +1,10 @@
+;---------------------------------------------------------
+; WiC64 PlusVIA/6821 Interface
+; Copyright (C) 2024-2026 SukkoPera
+;---------------------------------------------------------
+;
 ; This platform file is meant for using the original WiC64 (NOT the +4 variant!) through a PlusVIA board with an MC68A21
 ; chip (or faster, like MC68B21).
-;
-; Note that the original WiC64 expects to be powered through the 9VAC rails, so you will have to provide that, or use my
-; variant and set JP2 to 5V.
 ;
 ; - Like for the 6522 platform, we assume pin 8 of the userport connector is connected to CB2 ("PC2" signal (ack/strobe
 ;   from computer to ESP32: byte read from/written to port, rising edge).
@@ -27,18 +29,6 @@
 }
 
 TAPE_BUFFER_SIZE = 199
-
-;~ ; This is not used in wic64.asm but only in the tests
-;~ !macro wait_raster .line {
-;~ -   lda TED_VRASTER
-    ;~ cmp #.line
-    ;~ bne -
-;~ }
-
-;~ ; Ditto
-;~ !macro wait_raster {
-    ;~ +wait_raster $cb
-;~ }
 
 ; HW configuration stuff that must be performed ONLY ONCE at startup
 !macro wic64_setup {

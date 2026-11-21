@@ -73,4 +73,16 @@ response:
 
 This is an excerpt from example #2, which can be found [in the examples directory](./examples) together with many more.
 
+To compile the examples for the C64, run:
+
+```console
+foo@bar:~$ make
+```
+
+To compile for the C16/+4, run:
+
+```console
+foo@bar:~$ make PLUS4=1
+```
+
 **Please refer to the documentation of the original library to understand how to use it in your programs**.

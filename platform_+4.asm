@@ -1,7 +1,13 @@
-; +++ PLUS/4 INFORMATION +++
+;---------------------------------------------------------
+; WiC+4 Interface
+; Copyright (C) 2024-2026 SukkoPera
+;---------------------------------------------------------
 ;
 ; This platform file is for the WiC+4 board variant connected to a Plus/4 through the userport or to a C16/116 through a
 ; 16UP board.
+;
+; That board variant is DEPRECATED, but it is still available on this dead branch:
+; https://github.com/SukkoPera/WiC64-Plus4/tree/deprecated_plus4
 ;
 ; - The "PC2" signal (ack/strobe from computer to ESP32: byte read from/written to port, rising edge) is controlled
 ;   through /RTS.
