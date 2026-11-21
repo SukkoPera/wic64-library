@@ -85,11 +85,6 @@ wic64_send: ; EXPORT
     +wic64_set_source_pointer_from wic64_request
     jsr wic64_limit_bytes_to_transfer_to_remaining_bytes
 
-; FIXME :(
-!if PLUS4=1 {
-	jmp .wic64_send_critical_begin
-	!align 255,0
-}
 .wic64_send_critical_begin:
 
 .send_pages
@@ -292,11 +287,6 @@ wic64_receive: ; EXPORT
     +wic64_set_destination_pointer_from wic64_response
     jsr wic64_limit_bytes_to_transfer_to_remaining_bytes
 
-; FIXME :(
-!if PLUS4 {
-    jmp .wic64_receive_critical_begin
-    !align 255,0
-}
 .wic64_receive_critical_begin:
 
 .receive_pages:
