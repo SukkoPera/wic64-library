@@ -24,7 +24,11 @@ As stated above, unfortunately the WiC64 cannot just be plugged in the Plus/4 us
 The only drawback is that the WiC64 is normally powered with 9VAC, which is not directly provided by the board, but there are simple solutions to this problem:
 - On the Plus/4, build a cable that takes 9V AC from the user port (pins 10 and 11, order doesn't matter) and provides the PlusVIA board with it:
   ![9VAC cable](./img/9vac_from_userport.svg)
-- Use an external power supply: this should be 9V AC but others *might* also work: I don't take any responsibility, but if you connect a +5VDC power supply, for instance, to the &plusmn;9VAC pins on the PlusVIA (polarity doesn't matter), it should be enough to power the WiC64.
+- Use an external power supply: this should be 9V AC but others *might* also work: I don't take any responsibility, but if you connect a +5V-9V DC power supply, for instance, to the &plusmn;9VAC pins on the PlusVIA (polarity doesn't matter), it should be enough to power the WiC64.
+
+  > [!CAUTION]
+  > This only works for the WiC64 since it has an onboard bridge rectifier. Do not try it with anything else!
+
 - Make a small modification to the WiC64 board allowing it to be powered from +5V DC, all you need is a diode! Actually, this is the simplest thing you can do and to make it even simpler, I have released [a modified version of the board](https://github.com/SukkoPera/WiC64-Plus4) with the diode already integrated. If you still need to buy/build the board, you can go directly with this!
 
 ### Other Interfaces - Unsupported!
