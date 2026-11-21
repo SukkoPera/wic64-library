@@ -22,12 +22,10 @@ As stated above, unfortunately the WiC64 cannot just be plugged in the Plus/4 us
 > The PlusVIA board must be configured with the default address ($FDCx) and with JP3 set to CB2.
 
 The only drawback is that the WiC64 is normally powered with 9VAC, which is not directly provided by the board, but there are simple solutions to this problem:
-- On the Plus/4, build a cable that takes 9V AC from the user port and provided the PlusVIA with it:
+- On the Plus/4, build a cable that takes 9V AC from the user port (pins 10 and 11, order doesn't matter) and provides the PlusVIA board with it:
   ![9VAC cable](./img/9vac_from_userport.svg)
-- Use an external power supply (this should be 9V AC but others *might* also work).
-- Make a small modification to the WiC64 board allowing it to be powered from +5V DC, all you need is a diode!
-
-TBD: More info on this
+- Use an external power supply: this should be 9V AC but others *might* also work: I don't take any responsibility, but if you connect a +5VDC power supply, for instance, to the &plusmn;9VAC pins on the PlusVIA (polarity doesn't matter), it should be enough to power the WiC64.
+- Make a small modification to the WiC64 board allowing it to be powered from +5V DC, all you need is a diode! Actually, this is the simplest thing you can do and to make it even simpler, I have released [a modified version of the board](https://github.com/SukkoPera/WiC64-Plus4) with the diode already integrated. If you still need to buy/build the board, you can go directly with this!
 
 ### Other Interfaces - Unsupported!
 For the sake of completeness, here is some information on other things I tried, meant for the advanced curious reader:
