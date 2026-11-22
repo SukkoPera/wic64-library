@@ -7,6 +7,9 @@ The WiC64 is an ESP32-based adapter that allows Commodore computers to send and 
 > [!IMPORTANT]
 > **The WiC64 is not just another modem-like peripheral, it is rather a fully-fledged, blazing-fast network interface!** It can reach ~30 kb/s on the Plus/4!
 
+## Architecture
+All the hardware-specific parts have been abstracted into macros. Such macros have been implemented in platform-specific files (`interface_*.asm`), only one of which is included at a time, depending on the target platform.
+
 ## Hardware Interface
 
 > [!WARNING]
