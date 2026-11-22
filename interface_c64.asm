@@ -16,6 +16,13 @@
     USERPORT_DDRA = USERPORT_BASE + 2		;  Each bit corresponds to an individual pin, 1 sets the pin as output, while 0 as input
     USERPORT_DDRB = USERPORT_BASE + 3
     USERPORT_ICR = USERPORT_BASE + 13
+
+    BASIC_END_POINTER = $2d
+    BASIC_RESET_PROGRAM_POINTER = $a68e
+    KERNAL_INIT_IO = $fda3
+    KERNAL_RESET_VECTORS = $ff8a
+
+    BASIC_RUN = $a7ae
 }
 
 TAPE_BUFFER_SIZE = 193
@@ -97,12 +104,36 @@ TAPE_BUFFER_SIZE = 193
     sta $0319
 }
 
-!macro clear_keyboard_buffer {
+; Shall perform the BASIC "RUN" command
+!macro perform_run .response_size {
+    ; adjust basic end pointers
+    lda #<BASIC_AREA_START
+    sta BASIC_END_POINTER
+    lda #>BASIC_AREA_START
+    sta BASIC_END_POINTER+1
+
+    lda .response_size
+    clc
+    adc BASIC_END_POINTER
+    sta BASIC_END_POINTER
+
+    lda BASIC_END_POINTER+1
+    adc .response_size+1
+    sta BASIC_END_POINTER+1
+
+    ; reset stack pointer
+    ldx #$ff
+    txs
+
+    ; clear keyboard buffer
     lda #$00
     sta $c6
-}
 
-; Shall perform the BASIC "RUN" command
-!macro perform_run {
-    jmp $a7ae
+    ; reset system to defaults
++   jsr KERNAL_INIT_IO
+    jsr KERNAL_RESET_VECTORS
+    jsr BASIC_RESET_PROGRAM_POINTER
+
+    ; Run!
+    jmp BASIC_RUN
 }

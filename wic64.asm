@@ -805,17 +805,8 @@ wic64_load_and_run: ; EXPORT
 !addr {
 !if PLUS4=1 {
     .tapebuffer = $0332                     ; We have 193 bytes here (up to $3f2)
-    .basic_end_pointer = $2d
-    .basic_reset_program_pointer = $8af1    ; stxtpt
-    .kernal_init_io = $ff84                 ; Jumps to IOINIT (Could work for C64, too)
-    .kernal_reset_vectors = $ff8a           ; Jumps to RESTOR
-    ;~ .kernal_reset_vectors = $ff8d           ; Jumps to VECTOR
 } else {
     .tapebuffer = $0334
-    .basic_end_pointer = $2d
-    .basic_reset_program_pointer = $a68e
-    .kernal_init_io = $fda3
-    .kernal_reset_vectors = $ff8a
 }
 }
 
@@ -874,35 +865,8 @@ wic64_load_and_run: ; EXPORT
     dex
     bne -
 
-++  ; adjust basic end pointer
-    lda #<BASIC_AREA_START
-    sta .basic_end_pointer
-    lda #>BASIC_AREA_START
-    sta .basic_end_pointer+1
-
-    lda .response_size
-    clc
-    adc .basic_end_pointer
-    sta .basic_end_pointer
-
-    lda .basic_end_pointer+1
-    adc .response_size+1
-    sta .basic_end_pointer+1
-
-    ; reset stack pointer
-    ldx #$ff
-    txs
-
-    ; clear keyboard buffer
-    +clear_keyboard_buffer
-
-    ; reset system to defaults
-+   jsr .kernal_init_io
-    jsr .kernal_reset_vectors
-    jsr .basic_reset_program_pointer
-
-    ; run program
-    +perform_run
+++  ; run program
+    +perform_run .response_size
 
 .response_size: !word $0000
 } ; end of !pseudopc .tapebuffer

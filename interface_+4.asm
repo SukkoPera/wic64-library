@@ -202,24 +202,4 @@ TAPE_BUFFER_SIZE = 199
     +flag2_clear        ; And neither after waits :(((
 }
 
-; Called before a load_and_run is performed
-!macro prepare_run {
-    sta $ff3e			        ; Bank-in ROMs
-    sta $fdd0					; Lo ROM = BASIC, Hi ROM = KERNAL
-
-    ; Hide cursor - Does not seem to work
-    lda #$ff
-    sta $ff0c
-    sta $ff0d
-}
-
-!macro clear_keyboard_buffer {
-	lda #$00
-    sta $ef
-}
-
-!macro perform_run {
-    ; Thanks Csabo!
-    jsr $8bbe
-    jmp $8bdc
-}
+!src "run_+4.inc"

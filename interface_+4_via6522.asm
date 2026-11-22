@@ -24,8 +24,6 @@
 ; - The "PA2" signal (Direction: HIGH = C64/+4 => ESP, LOW = ESP => C64/+4) can be controlled directly.
 
 !addr {
-	BASIC_AREA_START = $1001
-
     USERPORT_BASE = $fdc0                   ; Default address on PlusVIA - ONLY OFFICIALLY SUPPORTED ADDRESS!
     USERPORT_PORTB = USERPORT_BASE + 0
     USERPORT_PORTA = USERPORT_BASE + 1
@@ -137,24 +135,4 @@ TAPE_BUFFER_SIZE = 199
     lda USERPORT_PORTB
 }
 
-; Called before a load_and_run is performed
-!macro prepare_run {
-    sta $ff3e			        ; Bank-in ROMs
-    sta $fdd0					; Lo ROM = BASIC, Hi ROM = KERNAL
-
-    ; Hide cursor - Does not seem to work
-    lda #$ff
-    sta $ff0c
-    sta $ff0d
-}
-
-!macro clear_keyboard_buffer {
-	lda #$00
-    sta $ef
-}
-
-!macro perform_run {
-	; Thanks Csabo!
-    jsr $8bbe
-    jmp $8bdc
-}
+!src "run_+4.inc"
