@@ -88,4 +88,4 @@ To compile for the C16/+4, run:
 foo@bar:~$ make PLUS4=1
 ```
 
-**Please refer to the documentation of the original library to understand how to use it in your programs**.
+**Please refer to the documentation of the original library to understand how to use it in your programs**. Some examples are also available among my [6502 Experiments](https://github.com/SukkoPera/6502Experiments).
